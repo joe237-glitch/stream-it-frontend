@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { font-family: 'Inter', system-ui, sans-serif; }
+
+body { background: #0a0a0f; color: white; min-height: 100vh; }
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+  .btn-primary {
+    @apply text-white font-bold py-3 px-6 rounded-xl transition-all duration-200;
+    background: linear-gradient(to right, #4f46e5, #7c3aed);
+    box-shadow: 0 10px 15px -3px rgb(99 102 241 / 0.2);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(to right, #6366f1, #8b5cf6);
+  }
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/15 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 border border-white/10;
+  }
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors;
+  }
+  .card {
+    @apply bg-[#12121a] border border-[#1e1e2e] rounded-2xl;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0f; }
+::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
