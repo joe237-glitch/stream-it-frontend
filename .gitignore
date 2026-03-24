@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Environment files — ne jamais committer les .env avec des vraies valeurs
+.env
+.env.staging
+.env.production
+# .env.development est commitable (valeurs locales non sensibles)
+# .env.staging et .env.production ne doivent exister que dans les dashboards Vercel/Render
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
