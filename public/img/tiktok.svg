@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#040404"/><stop offset="100%" stop-color="#111111"/></linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#EE1D52"/><stop offset="100%" stop-color="#aa1038"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect width="400" height="5" fill="#EE1D52"/>
+  <!-- TikTok note icon -->
+  <text x="155" y="142" font-family="Arial Black,sans-serif" font-weight="900" font-size="100" fill="#69C9D0" opacity="0.3">♪</text>
+  <text x="160" y="138" font-family="Arial Black,sans-serif" font-weight="900" font-size="100" fill="#EE1D52" opacity="0.3">♪</text>
+  <text x="158" y="140" font-family="Arial Black,sans-serif" font-weight="900" font-size="100" fill="#fff">♪</text>
+  <text x="200" y="185" font-family="Arial Black,sans-serif" font-weight="900" font-size="42" fill="#ffffff" text-anchor="middle" letter-spacing="3">TikTok</text>
+  <text x="200" y="215" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff" text-anchor="middle" letter-spacing="5" opacity="0.5">LIKE &amp; VUES</text>
+  <rect x="60" y="227" width="280" height="1.5" fill="#EE1D52" opacity="0.3"/>
+  <rect x="70" y="245" width="260" height="72" rx="14" fill="url(#pill)"/>
+  <text x="200" y="292" font-family="Arial Black,sans-serif" font-weight="900" font-size="38" fill="#fff" text-anchor="middle">PACK BOOST</text>
+  <rect y="395" width="400" height="5" fill="#69C9D0"/>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d1f0d"/><stop offset="100%" stop-color="#000000"/></linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#c9a227"/><stop offset="100%" stop-color="#a07820"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect width="400" height="5" fill="#c9a227"/>
+  <text x="-20" y="320" font-family="Arial Black,sans-serif" font-weight="900" font-size="360" fill="#1DB954" opacity="0.05">S</text>
+  <circle cx="200" cy="90" r="44" fill="#1DB954"/>
+  <text x="200" y="106" font-family="Arial Black,sans-serif" font-weight="900" font-size="44" fill="#000" text-anchor="middle">♫</text>
+  <text x="200" y="178" font-family="Arial Black,sans-serif" font-weight="900" font-size="38" fill="#1DB954" text-anchor="middle" letter-spacing="4">SPOTIFY</text>
+  <text x="200" y="208" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff" text-anchor="middle" letter-spacing="6" opacity="0.5">PREMIUM SOLO</text>
+  <rect x="60" y="220" width="280" height="1.5" fill="#c9a227" opacity="0.3"/>
+  <rect x="70" y="238" width="260" height="72" rx="14" fill="url(#pill)"/>
+  <text x="200" y="285" font-family="Arial Black,sans-serif" font-weight="900" font-size="38" fill="#fff" text-anchor="middle">12 MOIS</text>
+  <rect x="272" y="226" width="96" height="24" rx="12" fill="#1DB954"/>
+  <text x="320" y="243" font-family="Arial,sans-serif" font-weight="800" font-size="12" fill="#fff" text-anchor="middle">🏆 ANNUEL</text>
+  <rect y="395" width="400" height="5" fill="#c9a227"/>
+</svg>
