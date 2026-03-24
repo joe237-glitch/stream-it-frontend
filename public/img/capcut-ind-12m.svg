@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a0a0a"/><stop offset="100%" stop-color="#111111"/></linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#c9a227"/><stop offset="100%" stop-color="#a07820"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect width="400" height="5" fill="#c9a227"/>
+  <circle cx="200" cy="90" r="48" fill="#1a1a1a" stroke="#c9a227" stroke-width="3"/>
+  <text x="200" y="109" font-family="Arial Black,sans-serif" font-weight="900" font-size="48" fill="#c9a227" text-anchor="middle">✂</text>
+  <text x="200" y="178" font-family="Arial Black,sans-serif" font-weight="900" font-size="42" fill="#ffffff" text-anchor="middle" letter-spacing="2">CAPCUT</text>
+  <text x="200" y="210" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff" text-anchor="middle" letter-spacing="4" opacity="0.5">PRO · SOLO</text>
+  <rect x="60" y="222" width="280" height="1.5" fill="#c9a227" opacity="0.3"/>
+  <rect x="70" y="240" width="260" height="72" rx="14" fill="url(#pill)"/>
+  <text x="200" y="287" font-family="Arial Black,sans-serif" font-weight="900" font-size="36" fill="#000" text-anchor="middle">12 MOIS</text>
+  <rect y="395" width="400" height="5" fill="#c9a227"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1a0520"/><stop offset="100%" stop-color="#000000"/></linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#cc0066"/><stop offset="100%" stop-color="#880044"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect width="400" height="5" fill="#cc0066"/>
+  <text x="50" y="260" font-family="Arial Black,sans-serif" font-weight="900" font-size="260" fill="#cc0066" opacity="0.05">📖</text>
+  <!-- Book icon -->
+  <rect x="148" y="40" width="104" height="120" rx="6" fill="none" stroke="#cc0066" stroke-width="3"/>
+  <rect x="148" y="40" width="12" height="120" rx="4" fill="#cc0066" opacity="0.6"/>
+  <rect x="166" y="60" width="70" height="2.5" rx="1" fill="#fff" opacity="0.3"/>
+  <rect x="166" y="72" width="60" height="2.5" rx="1" fill="#fff" opacity="0.3"/>
+  <rect x="166" y="84" width="65" height="2.5" rx="1" fill="#fff" opacity="0.3"/>
+  <rect x="166" y="96" width="55" height="2.5" rx="1" fill="#fff" opacity="0.3"/>
+  <text x="200" y="196" font-family="Arial Black,sans-serif" font-weight="900" font-size="28" fill="#cc0066" text-anchor="middle" letter-spacing="1">101 POSITIONS</text>
+  <text x="200" y="224" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="#fff" text-anchor="middle" letter-spacing="5" opacity="0.5">LIVRE NUMÉRIQUE</text>
+  <rect x="60" y="236" width="280" height="1.5" fill="#cc0066" opacity="0.3"/>
+  <rect x="70" y="254" width="260" height="72" rx="14" fill="url(#pill)"/>
+  <text x="200" y="297" font-family="Arial Black,sans-serif" font-weight="900" font-size="24" fill="#fff" text-anchor="middle">ACCÈS IMMÉDIAT</text>
+  <rect y="395" width="400" height="5" fill="#cc0066"/>
+</svg>

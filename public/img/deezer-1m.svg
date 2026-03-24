@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#120828"/><stop offset="100%" stop-color="#000000"/></linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#A238FF"/><stop offset="100%" stop-color="#7010cc"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect width="400" height="5" fill="#A238FF"/>
+  <!-- Sound bars -->
+  <rect x="120" y="100" width="16" height="30" rx="4" fill="#A238FF" opacity="0.9"/>
+  <rect x="142" y="82"  width="16" height="48" rx="4" fill="#A238FF" opacity="0.9"/>
+  <rect x="164" y="68"  width="16" height="62" rx="4" fill="#A238FF" opacity="0.9"/>
+  <rect x="186" y="54"  width="16" height="76" rx="4" fill="#A238FF"/>
+  <rect x="208" y="68"  width="16" height="62" rx="4" fill="#A238FF" opacity="0.9"/>
+  <rect x="230" y="82"  width="16" height="48" rx="4" fill="#A238FF" opacity="0.9"/>
+  <rect x="252" y="100" width="16" height="30" rx="4" fill="#A238FF" opacity="0.9"/>
+  <text x="200" y="178" font-family="Arial Black,sans-serif" font-weight="900" font-size="44" fill="#A238FF" text-anchor="middle" letter-spacing="3">DEEZER</text>
+  <text x="200" y="210" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff" text-anchor="middle" letter-spacing="6" opacity="0.5">PREMIUM · 1 PROFIL</text>
+  <rect x="60" y="222" width="280" height="1.5" fill="#A238FF" opacity="0.3"/>
+  <rect x="70" y="240" width="260" height="72" rx="14" fill="url(#pill)"/>
+  <text x="200" y="287" font-family="Arial Black,sans-serif" font-weight="900" font-size="42" fill="#fff" text-anchor="middle">1 MOIS</text>
+  <rect y="395" width="400" height="5" fill="#A238FF"/>
+</svg>
