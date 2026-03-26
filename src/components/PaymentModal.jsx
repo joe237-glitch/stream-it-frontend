@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
-import { Payment } from '../api/client'
+import { Payment, Wallet } from '../api/client'
 
 const COUNTRIES = [
   { code: 'CM',  flag: '🇨🇲', name: 'Cameroun' },
@@ -55,6 +55,8 @@ export default function PaymentModal({ product, cart, recharge, onClose, onSucce
   const [error, setError]       = useState('')
   const [failReason, setFailReason] = useState('')
   const [dots, setDots] = useState('.')
+  const [walletBalance, setWalletBalance] = useState(null)
+  const [walletLoading, setWalletLoading] = useState(false)
   const pollRef    = useRef(null)
   const sessionRef = useRef(0)
 
@@ -70,6 +72,12 @@ export default function PaymentModal({ product, cart, recharge, onClose, onSucce
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
+    // Fetch wallet balance if logged in and not in recharge mode
+    if (user && !recharge) {
+      Wallet.getBalance()
+        .then(res => setWalletBalance(parseFloat(res.data.data.balance) || 0))
+        .catch(() => setWalletBalance(null))
+    }
     return () => {
       document.body.style.overflow = ''
       if (pollRef.current) clearInterval(pollRef.current)
@@ -234,6 +242,49 @@ export default function PaymentModal({ product, cart, recharge, onClose, onSucce
               <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Numéro de téléphone" className="input-field" />
 
               {error && <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl p-3">{error}</p>}
+
+              {/* Wallet payment button (not for recharge) */}
+              {!recharge && user && walletBalance !== null && (
+                <button
+                  onClick={async () => {
+                    if (walletBalance < amountXAF) return
+                    setWalletLoading(true)
+                    setError('')
+                    try {
+                      const payload = product
+                        ? { productId: product.id }
+                        : { products: cart.map(i => ({ productId: i.product.id, quantity: i.quantity })) }
+                      await Wallet.pay(payload)
+                      setStep('success')
+                      toast('Paiement par solde confirmé ! 🎉', 'success')
+                      setTimeout(() => { onSuccess?.(); onClose() }, 3000)
+                    } catch (err) {
+                      setError(err.response?.data?.message || 'Erreur de paiement wallet')
+                    } finally {
+                      setWalletLoading(false)
+                    }
+                  }}
+                  disabled={walletLoading || walletBalance < amountXAF}
+                  className={`w-full py-3.5 text-sm font-bold rounded-2xl border transition-all ${
+                    walletBalance >= amountXAF
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
+                      : 'bg-white/5 border-white/10 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  {walletLoading ? '⏳ Paiement en cours...' :
+                   walletBalance >= amountXAF
+                    ? `💰 Payer avec mon solde (${walletBalance.toLocaleString()} XAF)`
+                    : `💰 Solde insuffisant (${walletBalance.toLocaleString()} XAF)`}
+                </button>
+              )}
+
+              {!recharge && user && walletBalance !== null && (
+                <div className="flex items-center gap-3 text-xs text-slate-600">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span>ou payer par Mobile Money</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+              )}
 
               <button onClick={submit} disabled={loading || (recharge ? amountXAF < 10 : amountXAF < 100)}
                 className="w-full btn-primary py-3.5 text-sm disabled:opacity-50">
