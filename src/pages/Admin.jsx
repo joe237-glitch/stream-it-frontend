@@ -236,7 +236,7 @@ function ProductsTab() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-400 text-xs">{p.category}</td>
-                  <td className="px-4 py-3 font-bold text-sm">{formatAmount(p.price)}</td>
+                  <td className="px-4 py-3 font-bold text-sm">{formatAmount(Math.round(p.price * 655 / 100))}</td>
                   <td className="px-4 py-3 text-slate-400 text-xs">{p.duration_label || `${p.duration_days}j`}</td>
                   <td className="px-4 py-3 text-xs">{p.stock === -1 ? '∞' : p.stock ?? '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={p.is_active ? 'active' : 'inactive'} /></td>
