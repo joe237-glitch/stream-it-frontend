@@ -177,7 +177,11 @@ export default function Account() {
                     <div>📅 Début : <span className="text-slate-300">{formatDate(s.start_date)}</span></div>
                     <div>⌛ Fin : <span className="text-slate-300">{formatDate(s.end_date)}</span></div>
                   </div>
-                  {s.login_email ? (
+                  {s.status === 'cancelled' ? (
+                    <div className="text-center text-xs text-red-400 py-2">❌ Abonnement annulé</div>
+                  ) : s.status === 'expired' ? (
+                    <div className="text-center text-xs text-slate-500 py-2">⌛ Abonnement expiré</div>
+                  ) : s.login_email ? (
                     <button onClick={() => setCredModal(s)}
                       className="w-full py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
                       🔑 Voir mes identifiants
@@ -278,22 +282,26 @@ export default function Account() {
               <h3 className="font-bold text-sm">Historique du portefeuille</h3>
             </div>
             <div className="divide-y divide-white/5">
-              {txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.payment_method === 'wallet').length === 0 ? (
+              {txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.type === 'refund' || t.payment_method === 'wallet').length === 0 ? (
                 <p className="text-center text-slate-600 py-8 text-sm">Aucune opération</p>
-              ) : txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.payment_method === 'wallet').map(t => {
+              ) : txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.type === 'refund' || t.payment_method === 'wallet').map(t => {
                 const isCredit = t.type === 'wallet_credit'
+                const isRefund = t.type === 'refund'
                 const isFailed = t.status === 'failed'
+                const label = isRefund
+                  ? '↩ Remboursement'
+                  : isCredit
+                    ? (isFailed ? '✗ Recharge échouée' : '+ Recharge')
+                    : '− Achat wallet'
                 return (
                   <div key={t.id} className="flex items-center justify-between px-5 py-3">
                     <div>
-                      <p className="text-sm font-semibold">
-                        {isCredit ? (isFailed ? '✗ Recharge échouée' : '+ Recharge') : '− Achat wallet'}
-                      </p>
+                      <p className="text-sm font-semibold">{label}</p>
                       <p className="text-xs text-slate-500">{formatDate(t.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-extrabold ${isFailed ? 'text-slate-500 line-through' : isCredit ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {isCredit ? '+' : '−'}{formatAmount(t.amount)}
+                      <p className={`font-extrabold ${isFailed ? 'text-slate-500 line-through' : (isCredit || isRefund) ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {(isCredit || isRefund) ? '+' : '−'}{formatAmount(t.amount)}
                       </p>
                       <StatusBadge status={t.status} />
                     </div>
