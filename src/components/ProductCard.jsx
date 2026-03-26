@@ -69,7 +69,7 @@ export default function ProductCard({ product, onBuy, onDetail }) {
           {isAvailable ? (
             <>
               <p className="text-lg font-black text-white">
-                {(product.price / 100).toFixed(2)} $
+                {Math.round(product.price * 655 / 100).toLocaleString()} XAF
               </p>
               {isAdmin() ? (
                 <button
