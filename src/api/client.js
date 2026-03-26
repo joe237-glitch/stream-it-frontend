@@ -60,6 +60,13 @@ export const Auth = {
   changePassword: (data) => api.put('/auth/me/password', data),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
   resetPassword:  (data) => api.post('/auth/reset-password', data),
+
+  // OTP flows
+  registerRequestOtp: (data) => api.post('/auth/register/request-otp', data),
+  registerVerifyOtp:  (data) => api.post('/auth/register/verify-otp', data),
+  passwordRequestOtp: ()     => api.post('/auth/me/password/request-otp'),
+  emailRequestOtp:    (data) => api.post('/auth/me/email/request-otp', data),
+  changeEmail:        (data) => api.put('/auth/me/email', data),
 }
 
 // ─── Products ──────────────────────────────────────────────────
