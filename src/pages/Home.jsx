@@ -179,7 +179,7 @@ export default function Home() {
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-black text-white">
-                    {(detailProduct.price / 100).toFixed(2)} $
+                    {Math.round(detailProduct.price * 655 / 100).toLocaleString()} XAF
                   </p>
                   {detailProduct.discount > 0 && (
                     <span className="inline-block mt-1 text-xs font-black text-white bg-green-500 px-2 py-0.5 rounded-full">
