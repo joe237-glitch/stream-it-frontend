@@ -52,8 +52,16 @@ export default function Account() {
   const [newPhoto, setNewPhoto] = useState(null)
   const [newPhotoPreview, setNewPhotoPreview] = useState(null)
   const [pwdForm, setPwdForm] = useState({ old: '', new: '', confirm: '' })
+  const [pwdOtp, setPwdOtp] = useState(['', '', '', '', '', ''])
+  const [pwdStep, setPwdStep] = useState(1) // 1=form, 2=otp
   const [profileMsg, setProfileMsg] = useState(null)
   const [pwdMsg, setPwdMsg] = useState(null)
+  const [emailForm, setEmailForm] = useState({ new_email: '', password: '' })
+  const [emailOtp, setEmailOtp] = useState(['', '', '', '', '', ''])
+  const [emailStep, setEmailStep] = useState(0) // 0=hidden, 1=form, 2=otp
+  const [emailMsg, setEmailMsg] = useState(null)
+  const [otpCountdown, setOtpCountdown] = useState(0)
+  const [otpLoading, setOtpLoading] = useState(false)
 
   useEffect(() => {
     // Fetch fresh user data
@@ -93,16 +101,97 @@ export default function Account() {
     setNewPhotoPreview(URL.createObjectURL(file))
   }
 
-  const changePassword = async () => {
+  // ─── OTP countdown ──────────────────────────────────────────
+  useEffect(() => {
+    if (otpCountdown <= 0) return
+    const t = setTimeout(() => setOtpCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [otpCountdown])
+
+  // ─── Password change: Step 1 → request OTP ────────────────
+  const requestPwdOtp = async () => {
     if (pwdForm.new !== pwdForm.confirm) return setPwdMsg({ ok: false, msg: 'Les mots de passe ne correspondent pas' })
+    if (pwdForm.new.length < 6) return setPwdMsg({ ok: false, msg: 'Minimum 6 caractères' })
+    setPwdMsg(null)
+    setOtpLoading(true)
     try {
-      await Auth.changePassword({ old_password: pwdForm.old, new_password: pwdForm.new })
-      setPwdMsg({ ok: true, msg: '✅ Mot de passe mis à jour' })
-      setPwdForm({ old: '', new: '', confirm: '' })
+      await Auth.passwordRequestOtp({ old_password: pwdForm.old })
+      setPwdStep(2)
+      setOtpCountdown(60)
+      setPwdMsg({ ok: true, msg: 'Code envoyé à votre email' })
     } catch (err) {
       setPwdMsg({ ok: false, msg: err.response?.data?.message || 'Erreur' })
-    }
+    } finally { setOtpLoading(false) }
   }
+
+  // ─── Password change: Step 2 → verify OTP + change ────────
+  const verifyPwdOtp = async (code) => {
+    setPwdMsg(null)
+    setOtpLoading(true)
+    try {
+      await Auth.changePassword({ old_password: pwdForm.old, new_password: pwdForm.new, otp_code: code })
+      setPwdMsg({ ok: true, msg: '✅ Mot de passe mis à jour !' })
+      setPwdForm({ old: '', new: '', confirm: '' })
+      setPwdOtp(['', '', '', '', '', ''])
+      setPwdStep(1)
+      toast('Mot de passe modifié !', 'success')
+    } catch (err) {
+      setPwdMsg({ ok: false, msg: err.response?.data?.message || 'Code invalide' })
+      setPwdOtp(['', '', '', '', '', ''])
+    } finally { setOtpLoading(false) }
+  }
+
+  // ─── Email change: Step 1 → request OTP ───────────────────
+  const requestEmailOtp = async () => {
+    if (!emailForm.new_email || !emailForm.password) return setEmailMsg({ ok: false, msg: 'Remplissez tous les champs' })
+    setEmailMsg(null)
+    setOtpLoading(true)
+    try {
+      await Auth.emailRequestOtp({ new_email: emailForm.new_email, password: emailForm.password })
+      setEmailStep(2)
+      setOtpCountdown(60)
+      setEmailMsg({ ok: true, msg: `Code envoyé à ${emailForm.new_email}` })
+    } catch (err) {
+      setEmailMsg({ ok: false, msg: err.response?.data?.message || 'Erreur' })
+    } finally { setOtpLoading(false) }
+  }
+
+  // ─── Email change: Step 2 → verify OTP ────────────────────
+  const verifyEmailOtp = async (code) => {
+    setEmailMsg(null)
+    setOtpLoading(true)
+    try {
+      const r = await Auth.changeEmail({ new_email: emailForm.new_email, otp_code: code })
+      login(r.data.data.token, r.data.data.user)
+      setMeData(prev => ({ ...prev, email: emailForm.new_email }))
+      setEmailForm({ new_email: '', password: '' })
+      setEmailOtp(['', '', '', '', '', ''])
+      setEmailStep(0)
+      toast('Email modifié !', 'success')
+    } catch (err) {
+      setEmailMsg({ ok: false, msg: err.response?.data?.message || 'Code invalide' })
+      setEmailOtp(['', '', '', '', '', ''])
+    } finally { setOtpLoading(false) }
+  }
+
+  // ─── Shared OTP input handler ─────────────────────────────
+  const makeOtpHandler = (otp, setOtp, onComplete) => ({
+    onChange: (idx, val) => {
+      if (val && !/^\d$/.test(val)) return
+      const next = [...otp]
+      next[idx] = val
+      setOtp(next)
+      if (val && idx < 5) document.getElementById(`otp-${onComplete.name}-${idx + 1}`)?.focus()
+      if (val && idx === 5 && next.every(d => d)) onComplete(next.join(''))
+    },
+    onKeyDown: (idx, e) => {
+      if (e.key === 'Backspace' && !otp[idx] && idx > 0) document.getElementById(`otp-${onComplete.name}-${idx - 1}`)?.focus()
+    },
+    onPaste: (e) => {
+      const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+      if (text.length === 6) { e.preventDefault(); setOtp(text.split('')); onComplete(text) }
+    },
+  })
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -352,17 +441,98 @@ export default function Account() {
                 <input value={profile.last_name} onChange={e => setProfile(p => ({...p, last_name: e.target.value}))} className="input-field" />
               </div>
             </div>
-            <input value={user?.email} disabled className="input-field opacity-40 cursor-not-allowed" />
+            <div className="flex gap-2">
+              <input value={meData?.email} disabled className="input-field opacity-40 cursor-not-allowed flex-1" />
+              <button onClick={() => { setEmailStep(emailStep === 0 ? 1 : 0); setEmailMsg(null) }}
+                className="btn-secondary py-2 px-4 text-xs whitespace-nowrap">
+                {emailStep === 0 ? '✏️ Changer' : '✕ Annuler'}
+              </button>
+            </div>
+
+            {/* Email change form */}
+            {emailStep >= 1 && (
+              <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 space-y-3">
+                {emailMsg && <div className={`p-2 rounded-lg text-xs font-semibold ${emailMsg.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>{emailMsg.msg}</div>}
+
+                {emailStep === 1 && (
+                  <>
+                    <input value={emailForm.new_email} onChange={e => setEmailForm(p => ({...p, new_email: e.target.value}))}
+                      type="email" placeholder="Nouvel email" className="input-field text-sm" />
+                    <input value={emailForm.password} onChange={e => setEmailForm(p => ({...p, password: e.target.value}))}
+                      type="password" placeholder="Votre mot de passe actuel" className="input-field text-sm" />
+                    <button onClick={requestEmailOtp} disabled={otpLoading}
+                      className="w-full btn-primary py-2.5 text-xs disabled:opacity-50">
+                      {otpLoading ? '⏳ Envoi...' : 'Envoyer le code de vérification'}
+                    </button>
+                  </>
+                )}
+
+                {emailStep === 2 && (() => {
+                  const h = makeOtpHandler(emailOtp, setEmailOtp, verifyEmailOtp)
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-400 text-center">Code envoyé à <b className="text-indigo-400">{emailForm.new_email}</b></p>
+                      <div className="flex justify-center gap-2" onPaste={h.onPaste}>
+                        {emailOtp.map((d, i) => (
+                          <input key={i} id={`otp-verifyEmailOtp-${i}`} type="text" inputMode="numeric" maxLength={1}
+                            value={d} onChange={e => h.onChange(i, e.target.value)} onKeyDown={e => h.onKeyDown(i, e)}
+                            disabled={otpLoading}
+                            className="w-10 h-12 text-center text-lg font-bold bg-white/5 border border-white/10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none text-white disabled:opacity-50" />
+                        ))}
+                      </div>
+                      {otpCountdown > 0
+                        ? <p className="text-xs text-slate-600 text-center">Renvoyer dans {otpCountdown}s</p>
+                        : <button onClick={requestEmailOtp} className="text-xs text-indigo-400 hover:text-indigo-300 w-full text-center">Renvoyer le code</button>
+                      }
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+
             <button onClick={saveProfile} className="w-full btn-primary py-3 text-sm">Sauvegarder</button>
           </div>
 
+          {/* PASSWORD CHANGE WITH OTP */}
           <div className="card rounded-2xl p-6 space-y-4">
             <h3 className="font-bold">Changer le mot de passe</h3>
             {pwdMsg && <div className={`p-3 rounded-xl text-sm font-semibold ${pwdMsg.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>{pwdMsg.msg}</div>}
-            <input value={pwdForm.old} onChange={e => setPwdForm(p => ({...p, old: e.target.value}))} type="password" placeholder="Ancien mot de passe" className="input-field" />
-            <input value={pwdForm.new} onChange={e => setPwdForm(p => ({...p, new: e.target.value}))} type="password" placeholder="Nouveau mot de passe" className="input-field" />
-            <input value={pwdForm.confirm} onChange={e => setPwdForm(p => ({...p, confirm: e.target.value}))} type="password" placeholder="Confirmer le nouveau" className="input-field" />
-            <button onClick={changePassword} className="w-full btn-secondary py-3 text-sm">Changer le mot de passe</button>
+
+            {pwdStep === 1 && (
+              <>
+                <input value={pwdForm.old} onChange={e => setPwdForm(p => ({...p, old: e.target.value}))} type="password" placeholder="Ancien mot de passe" className="input-field" />
+                <input value={pwdForm.new} onChange={e => setPwdForm(p => ({...p, new: e.target.value}))} type="password" placeholder="Nouveau mot de passe" className="input-field" />
+                <input value={pwdForm.confirm} onChange={e => setPwdForm(p => ({...p, confirm: e.target.value}))} type="password" placeholder="Confirmer le nouveau" className="input-field" />
+                <button onClick={requestPwdOtp} disabled={otpLoading} className="w-full btn-secondary py-3 text-sm disabled:opacity-50">
+                  {otpLoading ? '⏳ Envoi du code...' : '🔐 Changer le mot de passe'}
+                </button>
+              </>
+            )}
+
+            {pwdStep === 2 && (() => {
+              const h = makeOtpHandler(pwdOtp, setPwdOtp, verifyPwdOtp)
+              return (
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-400 text-center">Entrez le code à 6 chiffres envoyé à votre email</p>
+                  <div className="flex justify-center gap-2" onPaste={h.onPaste}>
+                    {pwdOtp.map((d, i) => (
+                      <input key={i} id={`otp-verifyPwdOtp-${i}`} type="text" inputMode="numeric" maxLength={1}
+                        value={d} onChange={e => h.onChange(i, e.target.value)} onKeyDown={e => h.onKeyDown(i, e)}
+                        disabled={otpLoading}
+                        className="w-11 h-13 text-center text-xl font-bold bg-white/5 border border-white/10 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-white disabled:opacity-50" />
+                    ))}
+                  </div>
+                  <div className="text-center">
+                    {otpCountdown > 0
+                      ? <p className="text-xs text-slate-600">Renvoyer dans <span className="text-indigo-400">{otpCountdown}s</span></p>
+                      : <button onClick={requestPwdOtp} className="text-xs text-indigo-400 hover:text-indigo-300">Renvoyer le code</button>
+                    }
+                  </div>
+                  <button onClick={() => { setPwdStep(1); setPwdOtp(['','','','','','']); setPwdMsg(null) }}
+                    className="text-xs text-slate-500 hover:text-slate-400 w-full text-center">← Retour</button>
+                </div>
+              )
+            })()}
           </div>
 
           <button onClick={() => { logout(); window.location.href = '/' }}

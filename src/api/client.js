@@ -60,6 +60,13 @@ export const Auth = {
   changePassword: (data) => api.put('/auth/me/password', data),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
   resetPassword:  (data) => api.post('/auth/reset-password', data),
+
+  // OTP flows
+  registerRequestOtp: (data) => api.post('/auth/register/request-otp', data),
+  registerVerifyOtp:  (data) => api.post('/auth/register/verify-otp', data),
+  passwordRequestOtp: (data) => api.post('/auth/me/password/request-otp', data),
+  emailRequestOtp:    (data) => api.post('/auth/me/email/request-otp', data),
+  changeEmail:        (data) => api.put('/auth/me/email', data),
 }
 
 // ─── Products ──────────────────────────────────────────────────
@@ -126,6 +133,11 @@ export const Payment = {
 export const Wallet = {
   getBalance: ()     => api.get('/wallet'),
   pay:        (data) => api.post('/wallet/pay', data),
+}
+
+// ─── Admin Emails ───────────────────────────────────────────
+export const EmailLogs = {
+  getAll: (q = '') => api.get(`/admin/emails${q}`),
 }
 
 export default api

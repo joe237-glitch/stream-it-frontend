@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Products, Orders, Subscriptions, Transactions, Users, ServiceAccounts } from '../api/client'
+import { Products, Orders, Subscriptions, Transactions, Users, ServiceAccounts, EmailLogs } from '../api/client'
 import { useToast } from '../components/Toast'
 
 // ─── Shared Helpers ────────────────────────────────────────────────────────────
@@ -91,6 +91,7 @@ const ADMIN_TABS = [
   { id: 'subscriptions',    label: '📱 Abonnements' },
   { id: 'transactions',     label: '💳 Transactions' },
   { id: 'users',            label: '👥 Utilisateurs' },
+  { id: 'emails',           label: '📧 Emails' },
 ]
 
 // ─── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -940,6 +941,120 @@ export default function Admin() {
       {tab === 'subscriptions'    && <SubscriptionsTab />}
       {tab === 'transactions'     && <TransactionsTab />}
       {tab === 'users'            && <UsersTab />}
+      {tab === 'emails'           && <EmailsTab />}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EMAILS TAB
+// ═══════════════════════════════════════════════════════════════════
+
+function EmailsTab() {
+  const [emails, setEmails] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({})
+  const [filter, setFilter] = useState({ type: '', status: '' })
+
+  const fetchEmails = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ page, limit: 30 })
+      if (filter.type) params.set('type', filter.type)
+      if (filter.status) params.set('status', filter.status)
+      const r = await EmailLogs.getAll(`?${params}`)
+      setEmails(r.data.data || [])
+      setPagination(r.data.pagination || {})
+    } catch { setEmails([]) }
+    setLoading(false)
+  }, [page, filter])
+
+  useEffect(() => { fetchEmails() }, [fetchEmails])
+
+  const typeColors = {
+    'OTP': 'text-indigo-400',
+    'WELCOME': 'text-emerald-400',
+    'CREDENTIALS': 'text-blue-400',
+    'PURCHASE': 'text-violet-400',
+    'RECHARGE': 'text-emerald-400',
+    'REFUND': 'text-yellow-400',
+    'PASSWORD_CHANGED': 'text-orange-400',
+    'EMAIL_CHANGED': 'text-orange-400',
+    'PASSWORD_RESET': 'text-red-400',
+    'EXPIRATION_WARNING': 'text-yellow-400',
+    'ACCOUNT_DEACTIVATED': 'text-red-400',
+    'WALLET': 'text-emerald-400',
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex gap-3 flex-wrap">
+        <select value={filter.type} onChange={e => { setFilter(p => ({...p, type: e.target.value})); setPage(1) }}
+          className="input-field text-sm w-auto">
+          <option value="">Tous les types</option>
+          {['OTP', 'WELCOME', 'CREDENTIALS', 'PURCHASE', 'RECHARGE', 'REFUND', 'WALLET', 'PASSWORD_CHANGED', 'PASSWORD_RESET', 'EXPIRATION_WARNING', 'ACCOUNT_DEACTIVATED'].map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        <select value={filter.status} onChange={e => { setFilter(p => ({...p, status: e.target.value})); setPage(1) }}
+          className="input-field text-sm w-auto">
+          <option value="">Tous les statuts</option>
+          <option value="sent">Envoyé</option>
+          <option value="failed">Échoué</option>
+        </select>
+      </div>
+
+      {/* Table */}
+      <div className="card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-white/5">
+              <tr className="text-slate-500 text-xs uppercase">
+                {['Destinataire', 'Type', 'Sujet', 'Statut', 'Date'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} className="text-center py-12 text-slate-600">Chargement...</td></tr>
+              ) : emails.length === 0 ? (
+                <tr><td colSpan={5} className="text-center py-12 text-slate-600">Aucun email</td></tr>
+              ) : emails.map(e => (
+                <tr key={e.id} className="border-t border-white/5 hover:bg-white/2 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="text-sm">{e.to_email}</p>
+                    {e.first_name && <p className="text-xs text-slate-600">{e.first_name} {e.last_name}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-bold ${typeColors[e.type] || 'text-slate-400'}`}>{e.type}</span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-400 max-w-[250px] truncate">{e.subject}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${e.status === 'sent' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+                      {e.status === 'sent' ? '✓ Envoyé' : '✗ Échoué'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(e.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {pagination.total_pages > 1 && (
+        <div className="flex justify-center gap-2">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+            className="btn-secondary text-xs py-2 px-4 disabled:opacity-30">← Précédent</button>
+          <span className="text-sm text-slate-500 py-2">Page {page} / {pagination.total_pages}</span>
+          <button onClick={() => setPage(p => Math.min(pagination.total_pages, p + 1))} disabled={page >= pagination.total_pages}
+            className="btn-secondary text-xs py-2 px-4 disabled:opacity-30">Suivant →</button>
+        </div>
+      )}
     </div>
   )
 }
