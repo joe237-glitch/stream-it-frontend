@@ -22,8 +22,10 @@ export default function Login() {
     setLoading(true)
     try {
       const r = await Auth.login({ email, password })
-      login(r.data.data.token, r.data.data.user)
-      window.location.href = redirect
+      const user = r.data.data.user
+      login(r.data.data.token, user)
+      // Admin goes to dashboard, client goes to account
+      window.location.href = user.role === 'admin' ? '/admin' : redirect
     } catch (err) {
       setError(err.response?.data?.message || 'Identifiants incorrects')
       setLoading(false)
