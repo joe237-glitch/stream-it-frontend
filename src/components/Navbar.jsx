@@ -21,21 +21,31 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Boutique</Link>
-          {isLoggedIn && <Link to="/account" className="text-sm text-slate-400 hover:text-white transition-colors">Mon compte</Link>}
-          {isAdmin() && <Link to="/admin" className="text-sm text-slate-400 hover:text-white transition-colors">Admin</Link>}
+          {isAdmin() ? (
+            <>
+              <Link to="/admin" className="text-sm text-slate-400 hover:text-white transition-colors">Dashboard</Link>
+              <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Voir la boutique</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Boutique</Link>
+              {isLoggedIn && <Link to="/account" className="text-sm text-slate-400 hover:text-white transition-colors">Mon compte</Link>}
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Cart button */}
-          <button onClick={() => setIsOpen(true)} className="relative w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-            <span className="text-lg">🛒</span>
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] text-[10px] font-black bg-indigo-500 text-white rounded-full flex items-center justify-center px-1">
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
-          </button>
+          {/* Cart button — hidden for admin */}
+          {!isAdmin() && (
+            <button onClick={() => setIsOpen(true)} className="relative w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <span className="text-lg">🛒</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] text-[10px] font-black bg-indigo-500 text-white rounded-full flex items-center justify-center px-1">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Desktop auth */}
           {isLoggedIn ? (
@@ -74,18 +84,26 @@ export default function Navbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="sm:hidden border-t border-white/5 bg-black/90 backdrop-blur-xl px-4 py-3 space-y-1">
-          <Link to="/" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-            🏪 Boutique
-          </Link>
-          {isLoggedIn && (
-            <Link to="/account" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-              👤 Mon compte
-            </Link>
-          )}
-          {isAdmin() && (
-            <Link to="/admin" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-              ⚙️ Admin
-            </Link>
+          {isAdmin() ? (
+            <>
+              <Link to="/admin" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                ⚙️ Dashboard
+              </Link>
+              <Link to="/" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                🏪 Voir la boutique
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                🏪 Boutique
+              </Link>
+              {isLoggedIn && (
+                <Link to="/account" onClick={closeMenu} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                  👤 Mon compte
+                </Link>
+              )}
+            </>
           )}
           <div className="border-t border-white/5 pt-2 mt-1">
             {isLoggedIn ? (
