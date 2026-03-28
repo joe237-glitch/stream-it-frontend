@@ -74,7 +74,7 @@ export default function CartDrawer() {
                 <p className="text-sm font-bold truncate">{product.name.split(' – ')[0]}</p>
                 <p className="text-xs text-slate-500 truncate">{product.name.split(' – ').slice(1).join(' – ')}</p>
                 <p className="text-xs text-indigo-400 font-semibold mt-0.5">
-                  {Math.round(product.price * 655 / 100).toLocaleString()} XAF × {quantity}
+                  {Math.round(product.price).toLocaleString()} XAF × {quantity}
                 </p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
