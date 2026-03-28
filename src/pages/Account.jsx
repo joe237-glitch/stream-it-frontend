@@ -355,7 +355,7 @@ export default function Account() {
               {walletBalance !== null ? walletBalance.toLocaleString() : '—'} <span className="text-2xl text-emerald-600">XAF</span>
             </p>
             <p className="text-xs text-slate-600">
-              ≈ {walletBalance !== null ? (walletBalance / 655).toFixed(2) : '—'} $
+              ≈ {walletBalance !== null ? (walletBalance / 656).toFixed(2) : '—'} USD
             </p>
             <button
               onClick={() => setRechargeModal(true)}

@@ -93,8 +93,8 @@ export default function PaymentModal({ product, cart, recharge, onClose, onSucce
   const amountXAF = recharge
     ? (parseInt(rechargeAmt) || 0)
     : cart
-      ? cart.reduce((s, i) => s + Math.round(i.product.price * 655 / 100) * i.quantity, 0)
-      : product ? Math.round(product.price * 655 / 100) : 0
+      ? cart.reduce((s, i) => s + Math.round(i.product.price) * i.quantity, 0)
+      : product ? Math.round(product.price) : 0
 
   const headerLabel = recharge
     ? 'Recharge portefeuille'
