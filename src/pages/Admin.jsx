@@ -838,6 +838,12 @@ function UsersTab() {
     catch { toast('Erreur', 'error') }
   }
 
+  const deleteUser = async (u) => {
+    if (!window.confirm(`Supprimer definitivement le compte de ${u.first_name} ${u.last_name} (${u.email}) ?\n\nToutes ses commandes, abonnements et transactions seront supprimees.`)) return
+    try { await Users.delete(u.id); toast(`Compte de ${u.first_name} supprime`, 'success'); load() }
+    catch (err) { toast(err.response?.data?.message || 'Erreur de suppression', 'error') }
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="font-bold text-lg">Utilisateurs ({items.length})</h2>
@@ -893,6 +899,12 @@ function UsersTab() {
                         className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors ${u.is_active !== false ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'}`}>
                         {u.is_active !== false ? '🚫' : '✅'}
                       </button>
+                      {u.role !== 'admin' && (
+                        <button onClick={() => deleteUser(u)}
+                          className="text-xs px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">
+                          🗑
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

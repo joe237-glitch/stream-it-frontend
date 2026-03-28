@@ -118,9 +118,10 @@ export const ServiceAccounts = {
 export const Users = {
   getAll:       (q = '')     => api.get(`/users${q}`),
   getById:      (id)         => api.get(`/users/${id}`),
-  toggleActive: (id)         => api.patch(`/users/${id}/toggle-active`),
-  changeRole:   (id, r)      => api.patch(`/users/${id}/role`, { role: r }),
+  toggleActive: (id)         => api.put(`/users/${id}/status`),
+  changeRole:   (id, r)      => api.put(`/users/${id}/role`, { role: r }),
   adjustWallet: (id, data)   => api.post(`/users/${id}/wallet`, data),
+  delete:       (id)         => api.delete(`/users/${id}`),
 }
 
 // ─── Payment ──────────────────────────────────────────────────
