@@ -34,10 +34,10 @@ export default function Footer() {
           <div>
             <p className="text-white font-bold text-sm mb-4 uppercase tracking-widest">À propos</p>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li className="hover:text-slate-300 transition-colors cursor-default">Qui sommes-nous</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Comment ça marche</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Paiements acceptés</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Politique de remboursement</li>
+              <li><Link to="/info/about" className="hover:text-indigo-400 transition-colors">Qui sommes-nous</Link></li>
+              <li><Link to="/info/how-it-works" className="hover:text-indigo-400 transition-colors">Comment ça marche</Link></li>
+              <li><Link to="/info/payments" className="hover:text-indigo-400 transition-colors">Paiements acceptés</Link></li>
+              <li><Link to="/info/refunds" className="hover:text-indigo-400 transition-colors">Politique de remboursement</Link></li>
             </ul>
           </div>
 
@@ -53,7 +53,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <span>💬</span>
-                <a href="https://wa.me/237000000000" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+                <a href="https://wa.me/237655521445" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
                   WhatsApp Support
                 </a>
               </li>
@@ -78,9 +78,9 @@ export default function Footer() {
         <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <p>© {year} Stream-It. Tous droits réservés.</p>
           <div className="flex gap-5">
-            <span className="hover:text-slate-400 cursor-default transition-colors">Conditions d'utilisation</span>
-            <span className="hover:text-slate-400 cursor-default transition-colors">Confidentialité</span>
-            <span className="hover:text-slate-400 cursor-default transition-colors">Mentions légales</span>
+            <Link to="/info/terms" className="hover:text-slate-400 transition-colors">Conditions d'utilisation</Link>
+            <Link to="/info/privacy" className="hover:text-slate-400 transition-colors">Confidentialité</Link>
+            <Link to="/info/legal" className="hover:text-slate-400 transition-colors">Mentions légales</Link>
           </div>
         </div>
       </div>

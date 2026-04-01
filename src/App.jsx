@@ -14,6 +14,7 @@ import Account from './pages/Account'
 import Admin from './pages/Admin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import Info from './pages/Info'
 import { useEffect } from 'react'
 
 /**
@@ -53,6 +54,7 @@ export default function App() {
                     <Route path="/register"        element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password"  element={<ResetPassword />} />
+                    <Route path="/info/:section"   element={<Info />} />
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
                     <Route path="/admin"           element={<AdminRoute><Admin /></AdminRoute>} />
                   </Routes>
