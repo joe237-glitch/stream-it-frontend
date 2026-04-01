@@ -59,7 +59,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <span>🕐</span>
-                <span>Lun–Sam · 8h–22h</span>
+                <span>24/7 · Disponible tous les jours</span>
               </li>
             </ul>
 
@@ -68,6 +68,15 @@ export default function Footer() {
               {['MTN MoMo', 'Orange Money'].map(m => (
                 <span key={m} className="text-xs bg-white/5 border border-white/10 text-slate-400 px-2.5 py-1 rounded-full">
                   {m}
+                </span>
+              ))}
+            </div>
+
+            {/* Countries */}
+            <div className="flex gap-1.5 mt-4 flex-wrap">
+              {['🇨🇲 Cameroun', '🇨🇮 Côte d\'Ivoire', '🇧🇫 Burkina Faso', '🇧🇯 Bénin', '🇹🇬 Togo', '🇨🇩 RD Congo', '🇨🇬 Congo', '🇬🇦 Gabon', '🇺🇬 Ouganda'].map(c => (
+                <span key={c} className="text-[10px] bg-white/5 border border-white/10 text-slate-500 px-2 py-0.5 rounded-full">
+                  {c}
                 </span>
               ))}
             </div>
