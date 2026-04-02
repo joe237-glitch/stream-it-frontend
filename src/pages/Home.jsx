@@ -62,15 +62,15 @@ export default function Home() {
         <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold px-4 py-2 rounded-full mb-6">
           ⚡ ACTIVATION RAPIDE · SANS CARTE BANCAIRE
         </div>
-        <h1 className="text-5xl md:text-6xl font-black mb-4 leading-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 leading-tight">
           Netflix, Spotify, Prime<br/>
           <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">& bien plus encore</span>
         </h1>
-        <p className="text-slate-500 text-lg max-w-xl mx-auto">
-          1 mois · 3 mois · 6 mois · 12 mois — Accès immédiat via Mobile Money
+        <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto px-2">
+          1 mois · 3 mois · 6 mois · 12 mois<br className="sm:hidden" /> Accès immédiat via Mobile Money
         </p>
 
-        <div className="flex items-center justify-center gap-10 mt-8">
+        <div className="flex items-center justify-center gap-6 sm:gap-10 mt-8">
           {[
             [loading ? '...' : `${activeCount}+`, 'Produits'],
             ['-80%', 'Économies'],

@@ -6,6 +6,7 @@
 
 * { font-family: 'Inter', system-ui, sans-serif; }
 
+html { background: #0a0a0f; }
 body { background: #0a0a0f; color: white; min-height: 100vh; }
 
 @layer components {
