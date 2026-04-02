@@ -15,6 +15,8 @@ import Admin from './pages/Admin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Info from './pages/Info'
+import SSOCallback from './pages/SSOCallback'
+import OAuthCallback from './pages/OAuthCallback'
 import { useEffect } from 'react'
 
 /**
@@ -55,6 +57,8 @@ export default function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password"  element={<ResetPassword />} />
                     <Route path="/info/:section"   element={<Info />} />
+                    <Route path="/sso-callback"    element={<SSOCallback />} />
+                    <Route path="/oauth-complete"  element={<OAuthCallback />} />
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
                     <Route path="/admin"           element={<AdminRoute><Admin /></AdminRoute>} />
                   </Routes>

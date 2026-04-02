@@ -67,6 +67,7 @@ export const Auth = {
   passwordRequestOtp: (data) => api.post('/auth/me/password/request-otp', data),
   emailRequestOtp:    (data) => api.post('/auth/me/email/request-otp', data),
   changeEmail:        (data) => api.put('/auth/me/email', data),
+  googleOAuth:        (data) => api.post('/auth/oauth/google', data),
 }
 
 // ─── Products ──────────────────────────────────────────────────
