@@ -25,7 +25,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2" onClick={closeMenu}>
           <img src="/img/logo-icon.svg" alt="Stream-It" className="w-7 h-7" />
-          <span className="font-black text-lg tracking-tight">Stream<span className="text-green-400">-it</span></span>
+          <span className="font-black text-lg tracking-tight">Stream-it</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
