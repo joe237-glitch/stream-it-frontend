@@ -11,8 +11,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <img src="/img/logo-icon.svg" alt="Stream-It" className="w-7 h-7" />
-              <span className="font-black text-white tracking-tight">Stream-it</span>
+              <img src="/img/logo.png" alt="Stream-It" className="h-7" />
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
               Abonnements digitaux premium livrés instantanément. Netflix, Spotify, gaming et plus — payez via Mobile Money.
