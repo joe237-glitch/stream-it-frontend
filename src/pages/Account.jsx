@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
@@ -38,8 +38,14 @@ function formatAmount(n) {
 }
 
 export default function Account() {
-  const { user, logout, login } = useAuth()
+  const { user, logout, login, isAdmin } = useAuth()
+  const navigate = useNavigate()
   const toast = useToast()
+
+  // Admin should go to /admin, not /account
+  useEffect(() => {
+    if (isAdmin()) navigate('/admin', { replace: true })
+  }, [isAdmin, navigate])
   const [tab, setTab] = useState('subscriptions')
   const [subs, setSubs] = useState([])
   const [orders, setOrders] = useState([])
