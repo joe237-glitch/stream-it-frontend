@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import SEO from '../components/SEO'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1 = form, 2 = OTP
@@ -125,6 +126,7 @@ export default function Register() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 py-12">
+      <SEO title="Creer un compte" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-2xl font-black mx-auto mb-4">S</div>

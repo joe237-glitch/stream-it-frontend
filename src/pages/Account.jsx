@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
 import PaymentModal from '../components/PaymentModal'
+import SEO from '../components/SEO'
 
 const TABS = [
   { id: 'subscriptions', label: '📱 Abonnements' },
@@ -195,6 +196,7 @@ export default function Account() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <SEO title="Mon compte" />
       {/* Header */}
       <div className="card rounded-2xl p-6 mb-6 flex items-center gap-5">
         <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">

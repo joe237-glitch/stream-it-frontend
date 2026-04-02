@@ -4,6 +4,7 @@ import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import SEO from '../components/SEO'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -35,6 +36,7 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+      <SEO title="Connexion" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-2xl font-black mx-auto mb-4">S</div>
