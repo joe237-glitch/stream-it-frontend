@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1 = form, 2 = OTP
@@ -147,6 +148,15 @@ export default function Register() {
 
           {/* ─── STEP 1: Registration Form ─────────────────── */}
           {step === 1 && (
+            <>
+            <GoogleSignInButton onError={setError} />
+
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-xs text-slate-500 uppercase tracking-wide">ou</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
             <form onSubmit={requestOtp} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -174,6 +184,7 @@ export default function Register() {
                 {loading ? '⏳ Envoi du code...' : 'Continuer →'}
               </button>
             </form>
+            </>
           )}
 
           {/* ─── STEP 2: OTP Verification ──────────────────── */}
