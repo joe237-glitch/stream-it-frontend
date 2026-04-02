@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import ProductCard from '../components/ProductCard'
 import PaymentModal from '../components/PaymentModal'
+import SEO from '../components/SEO'
 
 const CATEGORIES = ['Tous', 'Netflix', 'Spotify', 'Amazon Prime', 'Disney+', 'IPTV', 'Gaming', 'Abonnements Gaming', 'Cartes Cadeaux', 'Autres']
 
@@ -55,6 +56,7 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
+      <SEO title="Boutique" />
       {/* Hero */}
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold px-4 py-2 rounded-full mb-6">

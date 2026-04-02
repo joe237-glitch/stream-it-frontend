@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 
 const sections = {
   about: {
@@ -199,6 +200,7 @@ export default function Info() {
   if (!data) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
+        <SEO title="Page introuvable" />
         <p className="text-4xl mb-4">404</p>
         <p className="text-slate-400 mb-6">Page introuvable</p>
         <Link to="/" className="btn-primary py-2.5 px-6">Retour a l'accueil</Link>
@@ -208,6 +210,7 @@ export default function Info() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
+      <SEO title={data.title} />
       <Link to="/" className="text-sm text-slate-500 hover:text-indigo-400 transition-colors mb-6 inline-block">
         &larr; Retour a l'accueil
       </Link>

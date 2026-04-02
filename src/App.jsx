@@ -15,6 +15,7 @@ import Admin from './pages/Admin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Info from './pages/Info'
+import ProductDetail from './pages/ProductDetail'
 import SSOCallback from './pages/SSOCallback'
 import OAuthCallback from './pages/OAuthCallback'
 import { useEffect } from 'react'
@@ -52,6 +53,7 @@ export default function App() {
                 <div className="flex-1">
                   <Routes>
                     <Route path="/"                element={<Home />} />
+                    <Route path="/product/:id"     element={<ProductDetail />} />
                     <Route path="/login"           element={<Login />} />
                     <Route path="/register"        element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />

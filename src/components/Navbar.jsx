@@ -2,12 +2,20 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useTranslation } from 'react-i18next'
 
 export default function Navbar() {
   const { user, isLoggedIn, isAdmin, logout } = useAuth()
   const { cartCount, setIsOpen } = useCart()
+  const { i18n } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const toggleLang = () => {
+    const next = i18n.language === 'fr' ? 'en' : 'fr'
+    i18n.changeLanguage(next)
+    localStorage.setItem('sit_lang', next)
+  }
 
   const handleLogout = () => { logout(); navigate('/'); setMenuOpen(false) }
   const closeMenu = () => setMenuOpen(false)
@@ -35,6 +43,11 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Language toggle */}
+          <button onClick={toggleLang} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase">
+            {i18n.language === 'fr' ? 'EN' : 'FR'}
+          </button>
+
           {/* Cart button — hidden for admin */}
           {!isAdmin() && (
             <button onClick={() => setIsOpen(true)} className="relative w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
