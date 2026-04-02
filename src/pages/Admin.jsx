@@ -932,7 +932,7 @@ export default function Admin() {
           <h1 className="text-2xl font-black">Panel Admin</h1>
           <p className="text-slate-500 text-sm mt-0.5">Stream-It · Gestion</p>
         </div>
-        <Link to="/" className="btn-secondary text-sm py-2 px-4">← Boutique</Link>
+        <Link to="/" className="btn-secondary text-sm py-2 px-4">← Voir le site</Link>
       </div>
 
       {/* Tabs */}
