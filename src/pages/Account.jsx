@@ -201,39 +201,46 @@ export default function Account() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6">
       <SEO title="Mon compte" />
       {/* Header */}
-      <div className="card rounded-2xl p-6 mb-6 flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">
-          {meData?.profile_photo
-            ? <img src={meData.profile_photo} alt="avatar" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-2xl font-black">{meData?.first_name?.[0]}{meData?.last_name?.[0]}</div>
-          }
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-extrabold">
-            {meData?.first_name || meData?.last_name ? `${meData?.first_name} ${meData?.last_name}` : meData?.email}
-          </h1>
-          <p className="text-slate-500 text-sm">{meData?.email}</p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meData?.role === 'admin' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-white/5 text-slate-500 border border-white/10'}`}>
-              {meData?.role === 'admin' ? '⭐ Admin' : 'Client'}
-            </span>
-            <span className="text-xs text-slate-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full font-mono">
-              ID #{meData?.id}
-            </span>
+      <div className="card rounded-2xl p-5 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">
+            {meData?.profile_photo
+              ? <img src={meData.profile_photo} alt="avatar" className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-xl font-black">{meData?.first_name?.[0]}{meData?.last_name?.[0]}</div>
+            }
           </div>
-        </div>
-        <div className="hidden sm:flex flex-col items-end gap-2">
-          {walletBalance !== null && (
-            <div className="text-right">
-              <p className="text-xs text-slate-500">Solde</p>
-              <p className="font-extrabold text-emerald-400">{walletBalance.toLocaleString()} XAF</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base sm:text-xl font-extrabold truncate">
+              {meData?.first_name || meData?.last_name ? `${meData?.first_name} ${meData?.last_name}` : meData?.email}
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm truncate">{meData?.email}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meData?.role === 'admin' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-white/5 text-slate-500 border border-white/10'}`}>
+                {meData?.role === 'admin' ? '⭐ Admin' : 'Client'}
+              </span>
+              <span className="text-xs text-slate-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full font-mono">
+                ID #{meData?.id}
+              </span>
             </div>
-          )}
-          <Link to="/" className="btn-secondary text-sm py-2 px-4">🛒 Boutique</Link>
+          </div>
+          <Link to="/" className="hidden sm:flex btn-secondary text-sm py-2 px-4 flex-shrink-0">🛒 Boutique</Link>
         </div>
+        {/* Solde — visible sur tous les écrans */}
+        {walletBalance !== null && (
+          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-slate-500">💰 Solde disponible</p>
+              <p className="text-xl font-extrabold text-emerald-400">{walletBalance.toLocaleString()} XAF</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/" className="sm:hidden text-xs text-slate-400 hover:text-white transition-colors px-3 py-2 rounded-xl hover:bg-white/5">🛒 Boutique</Link>
+              <button onClick={() => setRechargeModal(true)} className="btn-primary text-xs py-2 px-4">+ Recharger</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
