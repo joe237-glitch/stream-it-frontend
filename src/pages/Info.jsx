@@ -54,27 +54,43 @@ const sections = {
     title: 'Paiements acceptes',
     content: (
       <>
-        <p>Nous acceptons les moyens de paiement locaux les plus utilises au Cameroun :</p>
-        <div className="grid sm:grid-cols-2 gap-4 my-6">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-            <p className="text-2xl mb-2">📱</p>
-            <p className="font-bold text-white">MTN Mobile Money</p>
-            <p className="text-slate-400 text-sm mt-1">Paiement instantane depuis votre compte MTN MoMo</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-            <p className="text-2xl mb-2">📱</p>
-            <p className="font-bold text-white">Orange Money</p>
-            <p className="text-slate-400 text-sm mt-1">Paiement rapide via votre compte Orange Money</p>
-          </div>
+        <p>Nous acceptons les paiements <b>Mobile Money</b> dans <b>9 pays africains</b> via notre partenaire SoleasPay :</p>
+
+        <div className="grid sm:grid-cols-2 gap-3 my-6">
+          {[
+            { flag: '\ud83c\udde8\ud83c\uddf2', country: 'Cameroun', ops: 'MTN MoMo, Orange Money' },
+            { flag: '\ud83c\udde8\ud83c\uddee', country: "Cote d'Ivoire", ops: 'MTN MoMo, Orange Money, Moov Money, Wave' },
+            { flag: '\ud83c\udde7\ud83c\uddeb', country: 'Burkina Faso', ops: 'Orange Money, Moov Money' },
+            { flag: '\ud83c\udde7\ud83c\uddef', country: 'Benin', ops: 'MTN MoMo, Moov Money' },
+            { flag: '\ud83c\uddf9\ud83c\uddec', country: 'Togo', ops: 'Flooz (Moov), T-Money' },
+            { flag: '\ud83c\udde8\ud83c\udde9', country: 'RD Congo', ops: 'Vodacom M-Pesa, Airtel Money, Orange Money' },
+            { flag: '\ud83c\udde8\ud83c\uddec', country: 'Congo', ops: 'MTN MoMo, Airtel Money' },
+            { flag: '\ud83c\uddec\ud83c\udde6', country: 'Gabon', ops: 'Airtel Money, Moov Money' },
+            { flag: '\ud83c\uddfa\ud83c\uddec', country: 'Ouganda', ops: 'MTN MoMo, Airtel Money' },
+          ].map(c => (
+            <div key={c.country} className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+              <p className="font-bold text-white text-sm">{c.flag} {c.country}</p>
+              <p className="text-slate-400 text-xs mt-1">{c.ops}</p>
+            </div>
+          ))}
         </div>
+
         <h3>Comment payer ?</h3>
         <ol>
-          <li>Selectionnez votre produit et ajoutez-le au panier</li>
-          <li>Choisissez "Payer via Mobile Money" ou utilisez votre solde portefeuille</li>
-          <li>Entrez votre numero de telephone et validez sur votre appareil</li>
-          <li>C'est fait ! Vos acces arrivent par email.</li>
+          <li>Selectionnez votre produit et cliquez <b>Commander</b></li>
+          <li>Choisissez votre <b>pays</b> et votre <b>operateur</b></li>
+          <li>Entrez votre numero de telephone Mobile Money</li>
+          <li>Validez le paiement sur votre telephone (notification USSD)</li>
+          <li>Vos acces arrivent par <b>email</b> en quelques minutes</li>
         </ol>
-        <p>Tous les paiements sont securises et traites en temps reel.</p>
+
+        <h3>Portefeuille Stream-It</h3>
+        <p>
+          Vous pouvez aussi recharger votre <b>portefeuille Stream-It</b> en avance, puis payer vos abonnements
+          en un clic sans repasser par Mobile Money a chaque fois. Ideal pour les achats frequents.
+        </p>
+
+        <p>Tous les paiements sont securises via <b>SoleasPay</b> et traites en temps reel. Devise : <b>XAF (Franc CFA)</b>.</p>
       </>
     ),
   },
