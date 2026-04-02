@@ -7,7 +7,7 @@ import SEO from '../components/SEO'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1 = form, 2 = OTP
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', password: '', confirm: '' })
   const [photo, setPhoto] = useState(null)
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
@@ -37,6 +37,7 @@ export default function Register() {
         first_name: form.first_name,
         last_name: form.last_name,
         email: form.email,
+        phone: form.phone,
         password: form.password,
       })
       setStep(2)
@@ -75,6 +76,7 @@ export default function Register() {
         first_name: form.first_name,
         last_name: form.last_name,
         email: form.email,
+        phone: form.phone,
         password: form.password,
       })
       setCountdown(60)
@@ -173,6 +175,10 @@ export default function Register() {
               <div>
                 <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">Email</label>
                 <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="votre@email.com" required className="input-field" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">WhatsApp</label>
+                <input value={form.phone} onChange={e => set('phone', e.target.value)} type="tel" placeholder="+237 6XX XXX XXX" required className="input-field" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">Mot de passe</label>
