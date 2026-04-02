@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
@@ -47,6 +47,7 @@ export default function Account() {
     if (isAdmin()) navigate('/admin', { replace: true })
   }, [isAdmin, navigate])
   const [tab, setTab] = useState('subscriptions')
+  const tabsContainerRef = useRef(null)
   const [subs, setSubs] = useState([])
   const [orders, setOrders] = useState([])
   const [txns, setTxns] = useState([])
@@ -84,6 +85,14 @@ export default function Account() {
     Transactions.mine().then(r => { setTxns(r.data.data || []); setLoading(p => ({...p, txns: false})) }).catch(() => setLoading(p => ({...p, txns: false})))
     Wallet.getBalance().then(r => setWalletBalance(r.data.data?.balance ?? 0)).catch(() => {})
   }, [])
+
+  // Auto-scroll active tab into view on mobile
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const activeBtn = tabsContainerRef.current.querySelector(`[data-tab="${tab}"]`)
+      if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [tab])
 
   const saveProfile = async () => {
     try {
@@ -244,10 +253,10 @@ export default function Account() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-white/5 mb-6 overflow-x-auto">
+      <div ref={tabsContainerRef} className="flex gap-1 border-b border-white/5 mb-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px ${tab === t.id ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+          <button key={t.id} data-tab={t.id} onClick={() => setTab(t.id)}
+            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px flex-shrink-0 ${tab === t.id ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
             {t.label}
           </button>
         ))}
