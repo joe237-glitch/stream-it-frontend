@@ -1,23 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 50" fill="none">
-  <!-- Equalizer bars -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" fill="none">
+  <!-- Equalizer icon -->
   <g fill="#22c55e">
-    <!-- Dots left -->
-    <circle cx="8" cy="19" r="2.5"/>
-    <circle cx="8" cy="27" r="2.5"/>
-    <!-- Bar 1 -->
-    <rect x="16" y="14" width="5" height="22" rx="2.5"/>
-    <!-- Bar 2 -->
-    <rect x="25" y="8" width="5" height="34" rx="2.5"/>
-    <!-- Bar 3 (tallest) -->
-    <rect x="34" y="4" width="5" height="42" rx="2.5"/>
-    <!-- Bar 4 -->
-    <rect x="43" y="10" width="5" height="30" rx="2.5"/>
-    <!-- Bar 5 -->
-    <rect x="52" y="16" width="5" height="18" rx="2.5"/>
-    <!-- Dots right -->
-    <circle cx="63" cy="19" r="2.5"/>
-    <circle cx="63" cy="27" r="2.5"/>
+    <circle cx="4" cy="18" r="2.8"/>
+    <circle cx="4" cy="30" r="2.8"/>
+    <rect x="11" y="15" width="5" height="18" rx="2.5"/>
+    <rect x="19" y="10" width="5" height="28" rx="2.5"/>
+    <rect x="27" y="3" width="5" height="42" rx="2.5"/>
+    <rect x="35" y="10" width="5" height="28" rx="2.5"/>
+    <rect x="43" y="15" width="5" height="18" rx="2.5"/>
+    <circle cx="53" cy="18" r="2.8"/>
+    <circle cx="53" cy="30" r="2.8"/>
   </g>
   <!-- Text -->
-  <text x="76" y="36" font-family="system-ui,-apple-system,sans-serif" font-size="32" font-weight="800" fill="white" letter-spacing="-0.5">Stream<tspan fill="#a5b4fc">-it</tspan></text>
+  <text x="66" y="34" font-family="system-ui,-apple-system,sans-serif" font-size="30" font-weight="800" fill="white" letter-spacing="-0.5">Stream<tspan fill="#22c55e">-it</tspan></text>
 </svg>
