@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
@@ -37,17 +37,27 @@ function formatAmount(n) {
   return `${parseFloat(n).toLocaleString('fr-FR')} XAF`
 }
 
+const VALID_TABS = ['subscriptions', 'orders', 'transactions', 'wallet', 'profile']
+
 export default function Account() {
   const { user, logout, login, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const toast = useToast()
 
   // Admin should go to /admin, not /account
   useEffect(() => {
     if (isAdmin()) navigate('/admin', { replace: true })
   }, [isAdmin, navigate])
-  const [tab, setTab] = useState('subscriptions')
+
+  const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'subscriptions'
+  const [tab, setTab] = useState(initialTab)
   const tabsContainerRef = useRef(null)
+
+  const handleTabChange = (id) => {
+    setTab(id)
+    setSearchParams({ tab: id }, { replace: true })
+  }
   const [subs, setSubs] = useState([])
   const [orders, setOrders] = useState([])
   const [txns, setTxns] = useState([])
@@ -255,7 +265,7 @@ export default function Account() {
       {/* Tabs */}
       <div ref={tabsContainerRef} className="flex gap-1 border-b border-white/5 mb-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TABS.map(t => (
-          <button key={t.id} data-tab={t.id} onClick={() => setTab(t.id)}
+          <button key={t.id} data-tab={t.id} onClick={() => handleTabChange(t.id)}
             className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px flex-shrink-0 ${tab === t.id ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
             {t.label}
           </button>
