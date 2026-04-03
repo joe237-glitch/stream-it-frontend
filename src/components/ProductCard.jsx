@@ -69,7 +69,7 @@ export default function ProductCard({ product, onBuy, onDetail }) {
         <div className="mt-auto">
           {isAvailable ? (
             <>
-              <p className="text-lg font-black text-white">
+              <p className="text-lg font-black" style={{ color: 'var(--text-1)' }}>
                 {Math.round(product.price).toLocaleString()} XAF
               </p>
               {isAdmin() ? (
