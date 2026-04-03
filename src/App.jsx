@@ -47,7 +47,7 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <ToastProvider>
-              <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+              <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)', color: 'var(--text-1)', transition: 'background 0.3s, color 0.3s' }}>
                 <SessionExpiredBanner />
                 <Navbar />
                 <div className="flex-1">
