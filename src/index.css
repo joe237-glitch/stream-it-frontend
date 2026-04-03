@@ -4,14 +4,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── THEME VARIABLES ─────────────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --bg-page:      #0a0a0f;
+  --bg-surface:   #12121a;
+  --bg-surface2:  #0f0f18;
+  --bg-surface3:  #0d0d16;
+  --border:       #1e1e2e;
+  --text-1:       #ffffff;
+  --text-2:       #94a3b8;
+  --text-3:       #64748b;
+  --overlay:      rgba(255,255,255,0.05);
+  --overlay2:     rgba(255,255,255,0.08);
+  --nav-bg:       rgba(0,0,0,0.4);
+  --menu-bg:      rgba(0,0,0,0.92);
+  --scrollbar-bg: #0a0a0f;
+  --scrollbar-th: #1e1e2e;
+}
+
+[data-theme="light"] {
+  --bg-page:      #f1f5f9;
+  --bg-surface:   #ffffff;
+  --bg-surface2:  #f8fafc;
+  --bg-surface3:  #f1f5f9;
+  --border:       #e2e8f0;
+  --text-1:       #0f172a;
+  --text-2:       #475569;
+  --text-3:       #64748b;
+  --overlay:      rgba(0,0,0,0.04);
+  --overlay2:     rgba(0,0,0,0.07);
+  --nav-bg:       rgba(255,255,255,0.92);
+  --menu-bg:      rgba(255,255,255,0.97);
+  --scrollbar-bg: #f1f5f9;
+  --scrollbar-th: #cbd5e1;
+}
+
+/* ─── BASE ─────────────────────────────────────────────────────── */
 * { font-family: 'Inter', system-ui, sans-serif; }
+html { background: var(--bg-page); }
+body { background: var(--bg-page); color: var(--text-1); min-height: 100vh; transition: background 0.3s, color 0.3s; }
 
-html { background: #0a0a0f; }
-body { background: #0a0a0f; color: white; min-height: 100vh; }
-
+/* ─── COMPONENTS ───────────────────────────────────────────────── */
 @layer components {
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    background: var(--overlay);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
   }
   .btn-primary {
     @apply text-white font-bold py-3 px-6 rounded-xl transition-all duration-200;
@@ -22,16 +60,56 @@ body { background: #0a0a0f; color: white; min-height: 100vh; }
     background: linear-gradient(to right, #6366f1, #8b5cf6);
   }
   .btn-secondary {
-    @apply bg-white/10 hover:bg-white/15 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 border border-white/10;
+    @apply font-semibold py-3 px-6 rounded-xl transition-all duration-200;
+    background: var(--overlay2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+  }
+  .btn-secondary:hover {
+    background: var(--overlay);
   }
   .input-field {
-    @apply w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors;
+    @apply w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors;
+    background: var(--overlay);
+    border: 1px solid var(--border);
+    color: var(--text-1);
   }
+  .input-field::placeholder { color: var(--text-3); }
   .card {
-    @apply bg-[#12121a] border border-[#1e1e2e] rounded-2xl;
+    @apply rounded-2xl;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
   }
 }
 
+/* ─── LIGHT MODE TARGETED OVERRIDES ───────────────────────────── */
+[data-theme="light"] nav {
+  background: var(--nav-bg) !important;
+  border-bottom-color: var(--border) !important;
+}
+[data-theme="light"] .sm\:hidden,
+[data-theme="light"] [class*="bg-black"] {
+  background: var(--menu-bg) !important;
+  border-color: var(--border) !important;
+}
+
+/* Hardcoded bg overrides for light */
+[data-theme="light"] [class*="bg-\\[\\#0"] { background: var(--bg-surface2) !important; }
+[data-theme="light"] [class*="bg-slate-900"] { background: var(--bg-surface) !important; }
+
+/* White text → dark in light mode */
+[data-theme="light"] .text-white  { color: var(--text-1) !important; }
+[data-theme="light"] .text-slate-300 { color: var(--text-2) !important; }
+[data-theme="light"] .text-slate-400 { color: var(--text-2) !important; }
+[data-theme="light"] .text-slate-500 { color: var(--text-3) !important; }
+[data-theme="light"] .text-slate-600 { color: var(--text-3) !important; }
+
+/* Semi-transparent overlays → light equivalents */
+[data-theme="light"] [class*="bg-white\\/5"]  { background: var(--overlay) !important; }
+[data-theme="light"] [class*="bg-white\\/10"] { background: var(--overlay2) !important; }
+[data-theme="light"] [class*="border-white\\/"] { border-color: var(--border) !important; }
+
+/* ─── SCROLLBAR ────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0a0a0f; }
-::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-bg); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-th); border-radius: 4px; }
