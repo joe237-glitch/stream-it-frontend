@@ -145,7 +145,7 @@ export default function Navbar() {
               </button>
             ) : (
               <div className="flex flex-col gap-2">
-                <Link to="/login" onClick={closeMenu} className="px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                <Link to="/login" onClick={closeMenu} className="px-3 py-2.5 rounded-xl text-sm text-white font-semibold text-center bg-white/10 border border-white/20 hover:bg-white/15 transition-colors">
                   {t('nav.login')}
                 </Link>
                 <Link to="/register" onClick={closeMenu} className="btn-primary text-sm py-2.5 text-center block">
