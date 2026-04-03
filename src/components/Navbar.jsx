@@ -26,7 +26,9 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl bg-black/40">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2" onClick={closeMenu}>
-          <img src="/img/logo.png" alt="Stream-It" className="h-7" />
+          <span className={`block ${theme === 'light' ? 'bg-slate-900 px-2.5 py-1 rounded-xl' : ''}`}>
+            <img src="/img/logo.png" alt="Stream-It" className="h-7" />
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">

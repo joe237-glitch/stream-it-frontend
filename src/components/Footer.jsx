@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Footer() {
+  const { theme } = useTheme()
   const year = new Date().getFullYear()
 
   return (
@@ -11,7 +13,9 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <img src="/img/logo.png" alt="Stream-It" className="h-7" />
+              <span className={`block ${theme === 'light' ? 'bg-slate-900 px-2.5 py-1 rounded-xl' : ''}`}>
+                <img src="/img/logo.png" alt="Stream-It" className="h-7" />
+              </span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
               Abonnements digitaux premium livrés instantanément. Netflix, Spotify, gaming et plus — payez via Mobile Money.
