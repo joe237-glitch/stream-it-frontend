@@ -137,7 +137,8 @@ export default function Home() {
           onClick={() => setDetailProduct(null)}
         >
           <div
-            className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl"
+            className="rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex flex-col md:flex-row">
@@ -150,7 +151,7 @@ export default function Home() {
                 <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">
                   {detailProduct.category}
                 </p>
-                <h2 className="text-xl font-black text-white mb-1">
+                <h2 className="text-xl font-black mb-1" style={{ color: 'var(--text-1)' }}>
                   {detailProduct.name.split(' – ')[0]}
                 </h2>
                 {detailProduct.name.split(' – ')[1] && (
@@ -167,7 +168,7 @@ export default function Home() {
               </div>
 
               {/* Right: image + price + buy */}
-              <div className="md:w-64 bg-slate-800/50 flex flex-col items-center justify-center p-6 gap-4 border-t md:border-t-0 md:border-l border-white/10">
+              <div className="md:w-64 flex flex-col items-center justify-center p-6 gap-4 border-t md:border-t-0 md:border-l" style={{ background: 'var(--overlay)', borderColor: 'var(--border)' }}>
                 <div className="w-40 h-40 rounded-xl overflow-hidden bg-gradient-to-br from-indigo-900/40 to-violet-900/40 flex items-center justify-center">
                   {detailProduct.image_url ? (
                     <img
@@ -180,7 +181,7 @@ export default function Home() {
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-white">
+                  <p className="text-3xl font-black" style={{ color: 'var(--text-1)' }}>
                     {Math.round(detailProduct.price).toLocaleString()} XAF
                   </p>
                   {detailProduct.discount > 0 && (

@@ -97,12 +97,21 @@ body { background: var(--bg-page); color: var(--text-1); min-height: 100vh; tran
 [data-theme="light"] [class*="bg-\\[\\#0"] { background: var(--bg-surface2) !important; }
 [data-theme="light"] [class*="bg-slate-900"] { background: var(--bg-surface) !important; }
 
-/* White text → dark in light mode */
-[data-theme="light"] .text-white  { color: var(--text-1) !important; }
-[data-theme="light"] .text-slate-300 { color: var(--text-2) !important; }
-[data-theme="light"] .text-slate-400 { color: var(--text-2) !important; }
-[data-theme="light"] .text-slate-500 { color: var(--text-3) !important; }
-[data-theme="light"] .text-slate-600 { color: var(--text-3) !important; }
+/* Text → dark in light mode */
+[data-theme="light"] .text-white        { color: var(--text-1) !important; }
+[data-theme="light"] .text-slate-200    { color: var(--text-2) !important; }
+[data-theme="light"] .text-slate-300    { color: var(--text-2) !important; }
+[data-theme="light"] .text-slate-400    { color: var(--text-2) !important; }
+[data-theme="light"] .text-slate-500    { color: var(--text-3) !important; }
+[data-theme="light"] .text-slate-600    { color: var(--text-3) !important; }
+[data-theme="light"] .placeholder-slate-500::placeholder { color: var(--text-3) !important; }
+
+/* Cards — force white bg in light mode */
+[data-theme="light"] .card  { background: var(--bg-surface) !important; border-color: var(--border) !important; }
+
+/* Hover states */
+[data-theme="light"] .hover\:text-white:hover { color: var(--text-1) !important; }
+[data-theme="light"] .hover\:text-slate-300:hover { color: var(--text-2) !important; }
 
 /* Semi-transparent overlays → light equivalents */
 [data-theme="light"] [class*="bg-white\\/5"]  { background: var(--overlay) !important; }
