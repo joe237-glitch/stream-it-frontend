@@ -367,13 +367,77 @@ function ProductModal({ mode, initial, onClose, onSaved }) {
 
 // ─── SERVICE ACCOUNTS ──────────────────────────────────────────────────────────
 
-const SA_CATEGORIES = ['Netflix', 'Spotify', 'Amazon Prime', 'IPTV', 'Disney+', 'Gaming', 'Autres']
+// Mapping produit → type de livraison
+const DELIVERY_TYPE_MAP = {
+  // 👥 shared_account — email + mot de passe + profil/slot (compte partagé multi-profils)
+  'Netflix':            'shared_account',
+  'Disney+':            'shared_account',
+  'Crunchyroll':        'shared_account',
+  'Amazon Prime Video': 'shared_account',
+  'Max (HBO)':          'shared_account',
+  // 🔑 direct_credentials — email + mot de passe (accès solo complet)
+  'Spotify (Solo)':     'direct_credentials',
+  'Deezer (Solo)':      'direct_credentials',
+  'CapCut Pro':         'direct_credentials',
+  'ChatGPT Plus':       'direct_credentials',
+  'IPTV':               'direct_credentials',
+  'YouTube Premium':    'direct_credentials',
+  'Canva Pro (Solo)':   'direct_credentials',
+  'Amazon Prime':       'direct_credentials',
+  // 🔗 invite_link — invitation envoyée au client depuis le compte principal
+  'Spotify (Family)':   'invite_link',
+  'Spotify (Duo)':      'invite_link',
+  'Apple Music':        'invite_link',
+  'Canva Pro (Team)':   'invite_link',
+  'Deezer (Family)':    'invite_link',
+  'YouTube Family':     'invite_link',
+  // 🎁 gift_card — code d'activation uniquement
+  'Steam':              'gift_card',
+  'PSN (EUR)':          'gift_card',
+  'PSN (USD)':          'gift_card',
+  'Xbox / Game Pass':   'gift_card',
+  'Nintendo eShop':     'gift_card',
+  'Roblox':             'gift_card',
+  'Fortnite V-Bucks':   'gift_card',
+  'Valorant Points':    'gift_card',
+  'TikTok Coins':       'gift_card',
+  'Amazon Gift Card':   'gift_card',
+  'Binance Gift Card':  'gift_card',
+  'Blizzard Balance':   'gift_card',
+  'Apex Legends':       'gift_card',
+  'Free Fire Diamonds': 'gift_card',
+  'PUBG UC':            'gift_card',
+}
+
+const DT_LABELS = {
+  shared_account:     '👥 Partagé',
+  direct_credentials: '🔑 Direct',
+  invite_link:        '🔗 Invitation',
+  gift_card:          '🎁 Carte/Code',
+}
+
+const DT_COLORS = {
+  shared_account:     'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  direct_credentials: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20',
+  invite_link:        'bg-violet-500/15 text-violet-400 border-violet-500/20',
+  gift_card:          'bg-amber-500/15 text-amber-400 border-amber-500/20',
+}
+
+function DeliveryBadge({ type }) {
+  return (
+    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${DT_COLORS[type] || 'bg-slate-500/15 text-slate-400 border-slate-500/20'}`}>
+      {DT_LABELS[type] || type || '—'}
+    </span>
+  )
+}
 
 function ServiceAccountsTab() {
   const toast = useToast()
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(null)
+  const [items, setItems]         = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [modal, setModal]         = useState(null)
+  const [filterStatus, setFStatus]= useState('')
+  const [filterType, setFType]    = useState('')
 
   const load = useCallback(() => {
     setLoading(true)
@@ -385,11 +449,51 @@ function ServiceAccountsTab() {
 
   useEffect(() => { load() }, [load])
 
+  const filtered = items.filter(sa => {
+    if (filterStatus && sa.status !== filterStatus) return false
+    if (filterType  && sa.delivery_type !== filterType) return false
+    return true
+  })
+
+  const stats = {
+    total:     items.length,
+    available: items.filter(s => s.status === 'available').length,
+    assigned:  items.filter(s => s.status === 'assigned').length,
+    codes:     items.filter(s => s.delivery_type === 'gift_card').length,
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-lg">Comptes de service ({items.length})</h2>
-        <button onClick={() => setModal({ mode: 'create', data: {} })} className="btn-primary text-sm py-2 px-4">+ Nouveau compte</button>
+        <button onClick={() => setModal({ mode: 'create', data: {} })} className="btn-primary text-sm py-2 px-4">+ Nouveau</button>
+      </div>
+
+      {/* Mini stats */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          ['Total', stats.total, 'text-slate-300'],
+          ['Disponibles', stats.available, 'text-emerald-400'],
+          ['Assignés', stats.assigned, 'text-blue-400'],
+          ['Codes/Cartes', stats.codes, 'text-amber-400'],
+        ].map(([label, val, color]) => (
+          <div key={label} className="card rounded-xl p-3 text-center">
+            <p className={`text-xl font-black ${color}`}>{val}</p>
+            <p className="text-xs text-slate-600 mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filtres */}
+      <div className="flex flex-wrap gap-2">
+        <select value={filterStatus} onChange={e => setFStatus(e.target.value)} className="input-field py-1.5 text-xs w-auto">
+          <option value="">Tous statuts</option>
+          {['available','assigned','expired','disabled'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filterType} onChange={e => setFType(e.target.value)} className="input-field py-1.5 text-xs w-auto">
+          <option value="">Tous types</option>
+          {Object.entries(DT_LABELS).map(([t, l]) => <option key={t} value={t}>{l}</option>)}
+        </select>
       </div>
 
       <div className="card rounded-2xl overflow-hidden">
@@ -397,24 +501,30 @@ function ServiceAccountsTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-white/5">
               <tr className="text-slate-500 text-xs uppercase">
-                {['#','Catégorie','Email','Mot de passe','Profil','Statut','Actions'].map(h => (
+                {['#','Produit','Type','Identifiants / Code','Statut','Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-slate-600">Chargement...</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-slate-600">Aucun compte</td></tr>
-              ) : items.map(sa => (
+                <tr><td colSpan={6} className="text-center py-12 text-slate-600">Chargement...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-12 text-slate-600">Aucun compte</td></tr>
+              ) : filtered.map(sa => (
                 <tr key={sa.id} className="border-t border-white/5 hover:bg-white/2 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">#{sa.id}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400">{sa.category}</td>
-                  <td className="px-4 py-3 text-xs font-mono">{sa.email}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-slate-500">{sa.password ? '••••••••' : '—'}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400">{sa.profile_slot || '—'}</td>
-                  <td className="px-4 py-3"><StatusBadge status={sa.status || (sa.subscription_id ? 'assigned' : 'available')} /></td>
+                  <td className="px-4 py-3 text-xs font-medium text-slate-300 max-w-[140px] truncate">{sa.product_name || '—'}</td>
+                  <td className="px-4 py-3"><DeliveryBadge type={sa.delivery_type} /></td>
+                  <td className="px-4 py-3 text-xs font-mono">
+                    {sa.delivery_type === 'gift_card'
+                      ? <span className="text-amber-400 font-bold">{sa.activation_code ? `${sa.activation_code.substring(0,16)}…` : '—'}</span>
+                      : sa.delivery_type === 'invite_link'
+                      ? <span className="text-violet-400">{sa.login_email || '—'}</span>
+                      : <span>{sa.login_email || '—'}{sa.profile_slot && <span className="text-slate-600"> · {sa.profile_slot}</span>}</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3"><StatusBadge status={sa.status || 'available'} /></td>
                   <td className="px-4 py-3">
                     <button onClick={() => setModal({ mode: 'edit', data: sa })}
                       className="text-xs bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 px-2.5 py-1.5 rounded-lg transition-colors">✏️</button>
@@ -440,59 +550,179 @@ function ServiceAccountsTab() {
 
 function ServiceAccountModal({ mode, initial, onClose, onSaved }) {
   const toast = useToast()
+
+  const initialType = initial?.delivery_type || 'shared_account'
+
   const [form, setForm] = useState({
-    category: initial?.category || 'Netflix',
-    email: initial?.email || '',
-    password: initial?.password || '',
-    profile_slot: initial?.profile_slot || '',
-    notes: initial?.notes || '',
-    status: initial?.status || 'available',
+    product_id:      initial?.product_id      || '',
+    delivery_type:   initialType,
+    login_email:     initial?.login_email     || '',
+    login_password:  initial?.login_password  || '',
+    profile_slot:    initial?.profile_slot    || '',
+    activation_code: initial?.activation_code || '',
+    notes:           initial?.notes           || '',
+    status:          initial?.status          || 'available',
   })
+  const [allProducts, setAllProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  useEffect(() => {
+    Products.getAll('?limit=200&page=1').then(r => setAllProducts(r.data.data || [])).catch(() => {})
+  }, [])
+
+  // Auto-détection du type quand on choisit un produit
+  const handleProductChange = (productId) => {
+    set('product_id', productId)
+    const product = allProducts.find(p => String(p.id) === String(productId))
+    if (product) {
+      const matched = Object.keys(DELIVERY_TYPE_MAP).find(s =>
+        product.name.toLowerCase().includes(s.toLowerCase())
+      )
+      if (matched) set('delivery_type', DELIVERY_TYPE_MAP[matched])
+    }
+  }
+
+  const dt = form.delivery_type
 
   const submit = async e => {
     e.preventDefault()
     setLoading(true)
     try {
-      if (mode === 'create') await ServiceAccounts.create(form)
-      else await ServiceAccounts.update(initial.id, form)
+      // On nettoie les champs inutiles selon le type
+      const payload = { ...form }
+      if (dt === 'gift_card') {
+        payload.login_email = ''; payload.login_password = ''; payload.profile_slot = ''
+      } else if (dt === 'direct_credentials') {
+        payload.profile_slot = ''; payload.activation_code = ''
+      } else if (dt === 'invite_link') {
+        payload.login_password = ''; payload.profile_slot = ''; payload.activation_code = ''
+      } else {
+        payload.activation_code = '' // shared_account
+      }
+      if (mode === 'create') await ServiceAccounts.create(payload)
+      else await ServiceAccounts.update(initial.id, payload)
       toast(mode === 'create' ? 'Compte créé !' : 'Compte mis à jour !', 'success')
       onSaved()
     } catch (err) {
       toast(err.response?.data?.message || 'Erreur', 'error')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   return (
-    <Modal title={mode === 'create' ? 'Nouveau compte service' : 'Modifier le compte'} onClose={onClose}>
+    <Modal title={mode === 'create' ? '➕ Nouveau compte service' : '✏️ Modifier le compte'} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
-        <Field label="Catégorie">
-          <select value={form.category} onChange={e => set('category', e.target.value)} className="input-field">
-            {SA_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+
+        {/* Produit */}
+        <Field label="Produit">
+          {mode === 'edit' && initial?.product_name ? (
+            <p className="input-field opacity-60 text-sm cursor-not-allowed">{initial.product_name}</p>
+          ) : (
+            <select value={form.product_id} onChange={e => handleProductChange(e.target.value)} className="input-field" required>
+              <option value="">Sélectionner un produit…</option>
+              {allProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          )}
         </Field>
-        <Field label="Email du compte">
-          <input value={form.email} onChange={e => set('email', e.target.value)} type="email" required className="input-field" placeholder="compte@service.com" />
+
+        {/* Type de livraison */}
+        <Field label="Type de livraison">
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(DT_LABELS).map(([type, label]) => (
+              <button key={type} type="button" onClick={() => set('delivery_type', type)}
+                className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${
+                  form.delivery_type === type
+                    ? 'border-indigo-500 bg-indigo-500/15 text-indigo-300'
+                    : 'border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                }`}>
+                <span>{label}</span>
+                <p className="text-slate-600 font-normal mt-0.5 leading-tight text-[10px]">
+                  {type === 'shared_account'     && 'Email + Mdp + Profil'}
+                  {type === 'direct_credentials' && 'Email + Mdp (accès solo)'}
+                  {type === 'invite_link'         && 'Invitation famille/duo'}
+                  {type === 'gift_card'           && 'Code d\'activation uniquement'}
+                </p>
+              </button>
+            ))}
+          </div>
         </Field>
-        <Field label="Mot de passe">
-          <input value={form.password} onChange={e => set('password', e.target.value)} className="input-field" placeholder="Mot de passe du compte" />
-        </Field>
-        <Field label="Profil / Slot">
-          <input value={form.profile_slot} onChange={e => set('profile_slot', e.target.value)} className="input-field" placeholder="Ex: Profil 2" />
-        </Field>
+
+        {/* 🎁 GIFT CARD : code uniquement */}
+        {dt === 'gift_card' && (
+          <Field label="🎁 Code d'activation *">
+            <textarea
+              value={form.activation_code}
+              onChange={e => set('activation_code', e.target.value)}
+              required
+              className="input-field h-20 resize-none font-mono text-sm tracking-widest"
+              placeholder="XXXX-XXXX-XXXX-XXXX"
+            />
+          </Field>
+        )}
+
+        {/* EMAIL (shared, direct, invite) */}
+        {(dt === 'shared_account' || dt === 'direct_credentials' || dt === 'invite_link') && (
+          <Field label={dt === 'invite_link' ? '📧 Email du compte principal' : '📧 Email de connexion *'}>
+            <input
+              value={form.login_email}
+              onChange={e => set('login_email', e.target.value)}
+              type="email"
+              required={dt !== 'invite_link'}
+              className="input-field"
+              placeholder="compte@service.com"
+            />
+          </Field>
+        )}
+
+        {/* MOT DE PASSE (shared, direct) */}
+        {(dt === 'shared_account' || dt === 'direct_credentials') && (
+          <Field label="🔒 Mot de passe *">
+            <input
+              value={form.login_password}
+              onChange={e => set('login_password', e.target.value)}
+              required
+              className="input-field font-mono"
+              placeholder="Mot de passe du compte"
+            />
+          </Field>
+        )}
+
+        {/* PROFIL / SLOT (shared seulement) */}
+        {dt === 'shared_account' && (
+          <Field label="👤 Profil / Slot">
+            <input
+              value={form.profile_slot}
+              onChange={e => set('profile_slot', e.target.value)}
+              className="input-field"
+              placeholder="Ex: Profil 2, Slot B…"
+            />
+          </Field>
+        )}
+
+        {/* Info invitation */}
+        {dt === 'invite_link' && (
+          <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-3 text-xs text-violet-300">
+            💡 L'invitation sera envoyée à l'email du client depuis ce compte principal.
+            Assurez-vous que le compte a des slots disponibles.
+          </div>
+        )}
+
+        {/* Statut */}
         <Field label="Statut">
           <select value={form.status} onChange={e => set('status', e.target.value)} className="input-field">
-            <option value="available">Disponible</option>
-            <option value="assigned">Assigné</option>
-            <option value="inactive">Inactif</option>
+            <option value="available">✅ Disponible</option>
+            <option value="assigned">🔵 Assigné</option>
+            <option value="expired">⌛ Expiré</option>
+            <option value="disabled">🚫 Désactivé</option>
           </select>
         </Field>
-        <Field label="Notes">
-          <textarea value={form.notes} onChange={e => set('notes', e.target.value)} className="input-field h-20 resize-none" />
+
+        {/* Notes */}
+        <Field label="Notes internes">
+          <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
+            className="input-field h-16 resize-none text-sm" placeholder="Remarques optionnelles…" />
         </Field>
+
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="flex-1 btn-secondary py-3 text-sm">Annuler</button>
           <button type="submit" disabled={loading} className="flex-1 btn-primary py-3 text-sm disabled:opacity-50">
