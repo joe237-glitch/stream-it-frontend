@@ -304,10 +304,10 @@ export default function Account() {
                     <div className="text-center text-xs text-red-400 py-2">❌ Abonnement annulé</div>
                   ) : s.status === 'expired' ? (
                     <div className="text-center text-xs text-slate-500 py-2">⌛ Abonnement expiré</div>
-                  ) : s.login_email ? (
+                  ) : (s.login_email || s.activation_code) ? (
                     <button onClick={() => setCredModal(s)}
                       className="w-full py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
-                      🔑 Voir mes identifiants
+                      {s.delivery_type === 'gift_card' ? '🎁 Voir mon code d\'activation' : s.delivery_type === 'invite_link' ? '🔗 Voir mon invitation' : '🔑 Voir mes identifiants'}
                     </button>
                   ) : (
                     <div className="text-center text-xs text-slate-600 py-2">⏳ Attribution en cours...</div>
@@ -591,31 +591,97 @@ export default function Account() {
 
       {/* Credentials Modal */}
       {credModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="card rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setCredModal(null)}>
+          <div className="card rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold">🔑 Vos identifiants</h3>
+              <h3 className="font-extrabold">
+                {credModal.delivery_type === 'gift_card'   ? '🎁 Code d\'activation'
+                 : credModal.delivery_type === 'invite_link' ? '🔗 Votre invitation'
+                 : '🔑 Vos identifiants'}
+              </h3>
               <button onClick={() => setCredModal(null)} className="text-slate-500 hover:text-white w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">✕</button>
             </div>
+
             <div className="space-y-3">
-              {credModal.profile_slot && (
-                <div className="bg-white/5 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 mb-1">Profil / Slot</p>
-                  <p className="font-bold text-sm">{credModal.profile_slot}</p>
-                </div>
-              )}
-              {[['Email de connexion', credModal.login_email], ['Mot de passe', credModal.login_password]].map(([label, val]) => (
-                <div key={label} className="bg-white/5 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 mb-1">{label}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-sm flex-1 break-all">{val}</p>
-                    <button onClick={() => { navigator.clipboard.writeText(val || ''); toast('Copié !', 'success') }}
-                      className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+
+              {/* 🎁 GIFT CARD */}
+              {credModal.delivery_type === 'gift_card' && (
+                <>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-center">
+                    <p className="text-xs text-amber-400/70 mb-2 font-semibold uppercase tracking-wide">Code d'activation</p>
+                    <p className="font-black text-lg text-amber-400 break-all font-mono tracking-widest">{credModal.activation_code}</p>
                   </div>
-                </div>
-              ))}
+                  <button onClick={() => { navigator.clipboard.writeText(credModal.activation_code || ''); toast('Code copié !', 'success') }}
+                    className="w-full py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-sm font-bold hover:bg-amber-500/20 transition-colors">
+                    📋 Copier le code
+                  </button>
+                  <div className="bg-white/5 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                    <p className="font-semibold text-slate-400">Comment utiliser :</p>
+                    <p>1. Ouvrez le site / app officiel du service</p>
+                    <p>2. Accédez à "Cartes cadeaux" ou "Ajouter des fonds"</p>
+                    <p>3. Entrez le code ci-dessus et validez</p>
+                  </div>
+                </>
+              )}
+
+              {/* 🔗 INVITE LINK */}
+              {credModal.delivery_type === 'invite_link' && (
+                <>
+                  <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
+                    <p className="text-xs text-violet-400/70 mb-2 font-semibold uppercase tracking-wide">Invitation envoyée depuis</p>
+                    <p className="font-bold text-sm text-violet-300 break-all">{credModal.login_email || '—'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                    <p className="font-semibold text-slate-400">Comment rejoindre :</p>
+                    <p>1. Vérifiez votre boîte email pour l'invitation</p>
+                    <p>2. Cliquez sur "Rejoindre" dans l'email reçu</p>
+                    <p>3. Créez votre compte ou connectez-vous</p>
+                    <p className="text-slate-600 pt-1">Si vous ne trouvez pas l'email, vérifiez vos spams.</p>
+                  </div>
+                </>
+              )}
+
+              {/* 👥 SHARED ACCOUNT */}
+              {(credModal.delivery_type === 'shared_account' || !credModal.delivery_type) && (
+                <>
+                  {credModal.profile_slot && (
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">👤 Profil / Slot</p>
+                      <p className="font-black text-base text-indigo-400">{credModal.profile_slot}</p>
+                    </div>
+                  )}
+                  {[['📧 Email de connexion', credModal.login_email], ['🔒 Mot de passe', credModal.login_password]].map(([label, val]) => val ? (
+                    <div key={label} className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm flex-1 break-all font-mono">{val}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(val); toast('Copié !', 'success') }}
+                          className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+                      </div>
+                    </div>
+                  ) : null)}
+                </>
+              )}
+
+              {/* 🔑 DIRECT CREDENTIALS */}
+              {credModal.delivery_type === 'direct_credentials' && (
+                <>
+                  {[['📧 Email de connexion', credModal.login_email], ['🔒 Mot de passe', credModal.login_password]].map(([label, val]) => val ? (
+                    <div key={label} className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm flex-1 break-all font-mono">{val}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(val); toast('Copié !', 'success') }}
+                          className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+                      </div>
+                    </div>
+                  ) : null)}
+                </>
+              )}
+
             </div>
-            <p className="text-xs text-slate-600 mt-4">⚠️ Ne partagez jamais ces identifiants.</p>
+            <p className="text-xs text-slate-600 mt-4">⚠️ Ne partagez jamais ces informations avec quiconque.</p>
           </div>
         </div>
       )}
