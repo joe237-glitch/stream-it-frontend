@@ -56,7 +56,7 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      <SEO title="Boutique" />
+      <SEO />
       {/* Hero */}
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold px-4 py-2 rounded-full mb-6">
