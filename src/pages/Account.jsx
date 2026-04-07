@@ -16,16 +16,17 @@ const TABS = [
 
 function StatusBadge({ status }) {
   const map = {
-    active:    'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    pending:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
-    expired:   'bg-slate-500/15 text-slate-400 border-slate-500/20',
-    cancelled: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
-    paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    success:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    failed:    'bg-red-500/15 text-red-400 border-red-500/20',
-    completed: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+    active:             'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    pending:            'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
+    waiting_assignment: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    expired:            'bg-slate-500/15 text-slate-400 border-slate-500/20',
+    cancelled:          'bg-slate-500/15 text-slate-400 border-slate-500/20',
+    paid:               'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    success:            'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    failed:             'bg-red-500/15 text-red-400 border-red-500/20',
+    completed:          'bg-blue-500/15 text-blue-400 border-blue-500/20',
   }
-  const labels = { active:'Actif', pending:'En attente', expired:'Expiré', cancelled:'Annulé', paid:'Payé', success:'Succès', failed:'Échoué', completed:'Complété' }
+  const labels = { active:'Actif', pending:'En attente', waiting_assignment:"En cours d'attribution", expired:'Expiré', cancelled:'Annulé', paid:'Payé', success:'Succès', failed:'Échoué', completed:'Complété' }
   return <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${map[status] || 'bg-slate-500/15 text-slate-400 border-slate-500/20'}`}>{labels[status] || status}</span>
 }
 
@@ -304,6 +305,8 @@ export default function Account() {
                     <div className="text-center text-xs text-red-400 py-2">❌ Abonnement annulé</div>
                   ) : s.status === 'expired' ? (
                     <div className="text-center text-xs text-slate-500 py-2">⌛ Abonnement expiré</div>
+                  ) : s.status === 'waiting_assignment' ? (
+                    <div className="text-center text-xs text-amber-400/80 py-2">⏳ Accès en cours de préparation — vous serez notifié par email</div>
                   ) : (s.login_email || s.activation_code) ? (
                     <button onClick={() => setCredModal(s)}
                       className="w-full py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
