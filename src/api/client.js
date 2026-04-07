@@ -125,19 +125,15 @@ export const Users = {
   delete:       (id)         => api.delete(`/users/${id}`),
 }
 
-// ─── Payment (Soleas Pay) ─────────────────────────────────────
-// pay({ order_id, amount, wallet, service })
-//   wallet  – numéro de téléphone Mobile Money (ex: "699000000")
-//   service – ID opérateur Soleas Pay (1=MTN CM, 2=Orange CM, 5=Express Union)
+// ─── Payment ──────────────────────────────────────────────────
 export const Payment = {
-  pay:    (data)    => api.post('/payment/pay', data),
-  verify: (orderId) => api.get(`/payment/verify?orderId=${orderId}`),
+  pay:    (data)               => api.post('/payment/pay', data),
+  verify: (orderId, payId)     => api.get(`/payment/verify?orderId=${orderId}${payId ? '&payId=' + payId : ''}`),
 }
 
 // ─── Wallet ───────────────────────────────────────────────────
 export const Wallet = {
   getBalance: ()     => api.get('/wallet'),
-  recharge:   (data) => api.post('/wallet/recharge', data),
   pay:        (data) => api.post('/wallet/pay', data),
 }
 
