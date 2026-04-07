@@ -134,6 +134,7 @@ export const Payment = {
 // ─── Wallet ───────────────────────────────────────────────────
 export const Wallet = {
   getBalance: ()     => api.get('/wallet'),
+  recharge:   (data) => api.post('/wallet/recharge', data),
   pay:        (data) => api.post('/wallet/pay', data),
 }
 
