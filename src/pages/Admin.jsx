@@ -216,7 +216,7 @@ function ProductsTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-white/5">
               <tr className="text-slate-500 text-xs uppercase">
-                {['Produit','Catégorie','Prix','Durée','Stock','Statut','Actions'].map(h => (
+                {['Produit','Catégorie','Prix','Durée','Stock','Livraison','Statut','Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -240,6 +240,11 @@ function ProductsTab() {
                   <td className="px-4 py-3 font-bold text-sm">{formatAmount(Math.round(p.price))}</td>
                   <td className="px-4 py-3 text-slate-400 text-xs">{p.duration_label || `${p.duration_days}j`}</td>
                   <td className="px-4 py-3 text-xs">{p.stock === -1 ? '∞' : p.stock ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${p.delivery_type === 'manual' ? 'bg-amber-500/15 text-amber-400 border-amber-500/20' : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'}`}>
+                      {p.delivery_type === 'manual' ? '🖐 Manuel' : '⚡ Auto'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3"><StatusBadge status={p.is_active ? 'active' : 'inactive'} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -282,6 +287,7 @@ function ProductModal({ mode, initial, onClose, onSaved }) {
     duration_days: initial?.duration_days || '',
     duration_label: initial?.duration_label || '',
     stock: initial?.stock ?? -1,
+    delivery_type: initial?.delivery_type || 'auto',
     description: initial?.description || '',
     image_url: initial?.image_url || '',
     is_active: initial?.is_active ?? true,
@@ -339,9 +345,17 @@ function ProductModal({ mode, initial, onClose, onSaved }) {
             <input value={form.original_price} onChange={e => set('original_price', e.target.value)} type="number" className="input-field" placeholder="5000" />
           </Field>
         </div>
-        <Field label="Stock (-1 = illimité)">
-          <input value={form.stock} onChange={e => set('stock', e.target.value)} type="number" className="input-field" />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Stock (-1 = illimité)">
+            <input value={form.stock} onChange={e => set('stock', e.target.value)} type="number" className="input-field" />
+          </Field>
+          <Field label="Mode de livraison">
+            <select value={form.delivery_type} onChange={e => set('delivery_type', e.target.value)} className="input-field">
+              <option value="auto">⚡ Auto (stock)</option>
+              <option value="manual">🖐 Manuel (admin)</option>
+            </select>
+          </Field>
+        </div>
         <Field label="URL image">
           <input value={form.image_url} onChange={e => set('image_url', e.target.value)} className="input-field" placeholder="https://..." />
         </Field>
