@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
+import ChatBot from './components/ChatBot'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -66,6 +67,7 @@ export default function App() {
                   </Routes>
                 </div>
                 <Footer />
+                <ChatBot />
                 <CartDrawer />
               </div>
             </ToastProvider>
