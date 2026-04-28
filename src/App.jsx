@@ -19,6 +19,7 @@ import Info from './pages/Info'
 import ProductDetail from './pages/ProductDetail'
 import SSOCallback from './pages/SSOCallback'
 import OAuthCallback from './pages/OAuthCallback'
+import PaymentReturn from './pages/PaymentReturn'
 import { useEffect } from 'react'
 
 /**
@@ -62,6 +63,7 @@ export default function App() {
                     <Route path="/info/:section"   element={<Info />} />
                     <Route path="/sso-callback"    element={<SSOCallback />} />
                     <Route path="/oauth-complete"  element={<OAuthCallback />} />
+                    <Route path="/payment/return"  element={<PaymentReturn />} />
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
                     <Route path="/admin"           element={<AdminRoute><Admin /></AdminRoute>} />
                   </Routes>
