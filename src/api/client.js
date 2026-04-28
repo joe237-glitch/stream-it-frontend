@@ -125,10 +125,19 @@ export const Users = {
   delete:       (id)         => api.delete(`/users/${id}`),
 }
 
-// ─── Payment ──────────────────────────────────────────────────
+// ─── Payment (legacy SoleasPay) ────────────────────────────────
 export const Payment = {
   pay:    (data)               => api.post('/payment/pay', data),
   verify: (orderId, payId)     => api.get(`/payment/verify?orderId=${orderId}${payId ? '&payId=' + payId : ''}`),
+}
+
+// ─── Payments (GeniusPay hosted checkout) ─────────────────────
+// Backend: POST /api/payments/create -> { orderId, reference, checkout_url, status }
+// The user is redirected to checkout_url, then returned to /payment/return.
+export const Payments = {
+  create:  (data)    => api.post('/payments/create', data),
+  status:  (orderId) => api.get(`/payments/${orderId}/status`),
+  recheck: (orderId) => api.post(`/payments/${orderId}/recheck`),
 }
 
 // ─── Wallet ───────────────────────────────────────────────────
