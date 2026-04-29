@@ -22,7 +22,11 @@ import OAuthCallback from './pages/OAuthCallback'
 import PaymentReturn from './pages/PaymentReturn'
 import PaymentCoverage from './pages/PaymentCoverage'
 import AdminObservability from './pages/AdminObservability'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
+
+// Lazy-loaded 3D store — chunk séparé (R3F + drei + three).
+// Le flag VITE_STORE_3D_ENABLED côté Store3D gère un éventuel kill-switch.
+const Store3D = lazy(() => import('./pages/Store3D/Store3D'))
 
 /**
  * SessionExpiredBanner — Affiche un bandeau si la session a expiré.
@@ -70,6 +74,14 @@ export default function App() {
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
                     <Route path="/admin"               element={<AdminRoute><Admin /></AdminRoute>} />
                     <Route path="/admin/observability" element={<AdminRoute><AdminObservability /></AdminRoute>} />
+                    <Route
+                      path="/3d-store"
+                      element={
+                        <Suspense fallback={<div className="min-h-[70vh] flex items-center justify-center text-slate-400">Chargement de la boutique 3D…</div>}>
+                          <Store3D />
+                        </Suspense>
+                      }
+                    />
                   </Routes>
                 </div>
                 <Footer />
