@@ -21,6 +21,7 @@ import SSOCallback from './pages/SSOCallback'
 import OAuthCallback from './pages/OAuthCallback'
 import PaymentReturn from './pages/PaymentReturn'
 import PaymentCoverage from './pages/PaymentCoverage'
+import AdminObservability from './pages/AdminObservability'
 import { useEffect } from 'react'
 
 /**
@@ -67,7 +68,8 @@ export default function App() {
                     <Route path="/payment/return"     element={<PaymentReturn />} />
                     <Route path="/payment-coverage"   element={<PaymentCoverage />} />
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
-                    <Route path="/admin"           element={<AdminRoute><Admin /></AdminRoute>} />
+                    <Route path="/admin"               element={<AdminRoute><Admin /></AdminRoute>} />
+                    <Route path="/admin/observability" element={<AdminRoute><AdminObservability /></AdminRoute>} />
                   </Routes>
                 </div>
                 <Footer />
