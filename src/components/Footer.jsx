@@ -14,7 +14,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className={`block ${theme === 'light' ? 'bg-slate-900 px-2.5 py-1 rounded-xl' : ''}`}>
-                <img src="/img/logo.png" alt="Stream-It" className="h-7" />
+                <img src="/img/logo.svg" alt="Stream-It" className="h-7" />
               </span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
