@@ -32,3 +32,6 @@ dist-ssr
 .vercel
 # force redeploy
 
+
+# Claude Code preview launch config (local only)
+.claude/

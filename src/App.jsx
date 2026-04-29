@@ -22,7 +22,12 @@ import OAuthCallback from './pages/OAuthCallback'
 import PaymentReturn from './pages/PaymentReturn'
 import PaymentCoverage from './pages/PaymentCoverage'
 import AdminObservability from './pages/AdminObservability'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
+
+// Lazy chunk 3D : R3F + drei + three + postprocessing + detect-gpu sont
+// uniquement téléchargés si l'utilisateur visite /3d-store. Le flag
+// VITE_STORE_3D_ENABLED='false' coupe la route côté composant (kill-switch).
+const Store3D = lazy(() => import('./pages/Store3D/Store3D'))
 
 /**
  * SessionExpiredBanner — Affiche un bandeau si la session a expiré.
@@ -70,6 +75,14 @@ export default function App() {
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
                     <Route path="/admin"               element={<AdminRoute><Admin /></AdminRoute>} />
                     <Route path="/admin/observability" element={<AdminRoute><AdminObservability /></AdminRoute>} />
+                    <Route
+                      path="/3d-store"
+                      element={
+                        <Suspense fallback={<div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9aa0c0' }}>Chargement de la boutique 3D…</div>}>
+                          <Store3D />
+                        </Suspense>
+                      }
+                    />
                   </Routes>
                 </div>
                 <Footer />

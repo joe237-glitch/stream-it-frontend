@@ -39,6 +39,10 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">{t('nav.shop')}</Link>
+              <Link to="/3d-store" className="text-sm text-violet-300 hover:text-violet-100 transition-colors font-semibold flex items-center gap-1.5" title="Boutique 3D (prototype premium)">
+                <span style={{display:'inline-block',width:6,height:6,borderRadius:999,background:'#a78bfa',boxShadow:'0 0 8px #a78bfa'}}></span>
+                Boutique 3D
+              </Link>
               {isLoggedIn && <Link to="/account" className="text-sm text-slate-400 hover:text-white transition-colors">{t('nav.account')}</Link>}
             </>
           )}
