@@ -159,4 +159,11 @@ export const EmailLogs = {
   getAll: (q = '') => api.get(`/admin/emails${q}`),
 }
 
+// ─── Admin Observability ────────────────────────────────────
+// Returns the staging payment-health snapshot (auth admin required).
+// See backend: routes/observability.routes.js + services/observabilityService.js
+export const Observability = {
+  snapshot: () => api.get('/admin/observability/snapshot'),
+}
+
 export default api
