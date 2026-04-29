@@ -134,10 +134,18 @@ export const Payment = {
 // ─── Payments (GeniusPay hosted checkout) ─────────────────────
 // Backend: POST /api/payments/create -> { orderId, reference, checkout_url, status }
 // The user is redirected to checkout_url, then returned to /payment/return.
+//
+// Coverage matrix (Phase 1) — public, no auth, ETag-aware. Single source of
+// truth for which countries / currencies / operators Stream-It exposes.
 export const Payments = {
-  create:  (data)    => api.post('/payments/create', data),
-  status:  (orderId) => api.get(`/payments/${orderId}/status`),
-  recheck: (orderId) => api.post(`/payments/${orderId}/recheck`),
+  create:   (data)    => api.post('/payments/create', data),
+  status:   (orderId) => api.get(`/payments/${orderId}/status`),
+  recheck:  (orderId) => api.post(`/payments/${orderId}/recheck`),
+  coverage: (etag)    => api.get('/payments/coverage', {
+    headers: etag ? { 'If-None-Match': etag } : undefined,
+    // Don't throw on 304 — let the hook treat it as "cache still valid".
+    validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
+  }),
 }
 
 // ─── Wallet ───────────────────────────────────────────────────

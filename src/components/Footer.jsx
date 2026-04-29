@@ -39,6 +39,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link to="/info/about" className="hover:text-indigo-400 transition-colors">Qui sommes-nous</Link></li>
               <li><Link to="/info/how-it-works" className="hover:text-indigo-400 transition-colors">Comment ça marche</Link></li>
+              <li><Link to="/payment-coverage" className="hover:text-indigo-400 transition-colors">Modes de paiement disponibles</Link></li>
               <li><Link to="/info/payments" className="hover:text-indigo-400 transition-colors">Paiements acceptés</Link></li>
               <li><Link to="/info/refunds" className="hover:text-indigo-400 transition-colors">Politique de remboursement</Link></li>
             </ul>
