@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useDrag } from '@use-gesture/react'
 import Scene from './scene/Scene'
 import HUD2D from './hud/HUD2D'
 import Fallback2D from './hud/Fallback2D'
@@ -50,20 +49,33 @@ export default function Store3D() {
     ? STORE3D_CATEGORIES[mobileIdx]?.key
     : null
 
-  // Swipe gestures pour mobile
-  const bind = useDrag(
-    ({ swipe: [sx], last }) => {
-      if (!isPortrait || !last) return
-      if (sx === 1) {
-        // swipe right → previous
+  // Swipe natif (sans dépendance use-gesture incompatible React 19)
+  const touchStartRef = useRef(null)
+  const handleTouchStart = (e) => {
+    if (!isPortrait) return
+    const t = e.touches && e.touches[0]
+    if (!t) return
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() }
+  }
+  const handleTouchEnd = (e) => {
+    if (!isPortrait || !touchStartRef.current) return
+    const t = e.changedTouches && e.changedTouches[0]
+    if (!t) return
+    const start = touchStartRef.current
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    const dt = Date.now() - start.time
+    touchStartRef.current = null
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && dt < 700) {
+      if (dx > 0) {
+        // swipe droite → précédent
         setMobileIdx((i) => Math.max(0, i - 1))
-      } else if (sx === -1) {
-        // swipe left → next
+      } else {
+        // swipe gauche → suivant
         setMobileIdx((i) => Math.min(STORE3D_CATEGORIES.length - 1, i + 1))
       }
-    },
-    { swipe: { distance: 50, velocity: 0.4 } },
-  )
+    }
+  }
 
   useEffect(() => {
     if (flagDisabled) return
@@ -94,7 +106,8 @@ export default function Store3D() {
       className="fixed inset-0 z-30"
       aria-label="Boutique 3D Stream-It"
       style={{ background: '#06060d', touchAction: isPortrait ? 'pan-y' : 'auto' }}
-      {...(isPortrait ? bind() : {})}
+      onTouchStart={isPortrait ? handleTouchStart : undefined}
+      onTouchEnd={isPortrait ? handleTouchEnd : undefined}
     >
       <Scene isPortrait={isPortrait} mobileFocusKey={mobileFocusKey} />
       <HUD2D

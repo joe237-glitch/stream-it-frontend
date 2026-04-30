@@ -30,4 +30,12 @@ export const useStore3DSession = create((set, get) => ({
   // Compteur de frames pour debug perf (incrémenté par Scene)
   frameCount: 0,
   bumpFrame: () => set((s) => ({ frameCount: s.frameCount + 1 })),
+
+  // V4 : intro caméra terminée (CameraRig reprend après)
+  introDone: false,
+  setIntroDone: (introDone) => set({ introDone }),
+
+  // V4 : audio ambient
+  audioEnabled: false,
+  setAudioEnabled: (audioEnabled) => set({ audioEnabled }),
 }))

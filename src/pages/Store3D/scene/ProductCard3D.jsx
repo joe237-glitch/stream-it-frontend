@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Float, MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei'
 import * as THREE from 'three'
+import { FONT_INTER_BOLD, FONT_INTER_MEDIUM } from './fonts'
 
 /**
  * ProductCard3D V3 — biseau code-first multi-couches.
@@ -231,8 +232,7 @@ export default function ProductCard3D({
         maxWidth={W * 0.84}
         textAlign="center"
         outlineWidth={0}
-        letterSpacing={-0.01}
-        fontWeight="bold"
+        letterSpacing={-0.015}
       >
         {product.name}
       </Text>
@@ -249,7 +249,7 @@ export default function ProductCard3D({
         anchorX="center"
         anchorY="middle"
         outlineWidth={0}
-        letterSpacing={0.07}
+        letterSpacing={0.08}
       >
         {(product.duration_label || '').toUpperCase()}
       </Text>
@@ -262,7 +262,7 @@ export default function ProductCard3D({
         anchorX="center"
         anchorY="middle"
         outlineWidth={0}
-        letterSpacing={-0.025}
+        letterSpacing={-0.03}
       >
         {formatPrice(product.price)}
       </Text>
@@ -272,7 +272,7 @@ export default function ProductCard3D({
         color="#9aa0c0"
         anchorX="center"
         anchorY="middle"
-        letterSpacing={0.12}
+        letterSpacing={0.14}
       >
         {product.currency} · DÉTAILS
       </Text>

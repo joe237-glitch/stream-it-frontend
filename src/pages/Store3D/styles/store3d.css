@@ -1,7 +1,35 @@
 /* ============================================================
-   Store3D V2 — CSS premium (HUD + Drawer + Fallback 2D)
+   Store3D V4 — CSS premium (HUD + Drawer + Fallback 2D)
    Direction A "Atelier holographique" — palette violet/cyan/dark
    ============================================================ */
+
+/* Inter Variable depuis rsms.me (officiel auteur Rasmus Andersson).
+   Charge ~120 KB compressé (variable axes 100-900 wght + opsz). */
+@font-face {
+  font-family: 'StoreItInter';
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://rsms.me/inter/font-files/InterVariable.woff2?v=4.0')
+    format('woff2-variations'),
+       url('https://rsms.me/inter/font-files/InterVariable.woff2?v=4.0')
+    format('woff2');
+}
+
+body.store3d-active,
+.store3d-fb-page,
+.store3d-topbar,
+.store3d-drawer,
+.store3d-chip-bar,
+.store3d-mobile-nav,
+.store3d-tier-banner {
+  font-family: 'StoreItInter', 'Inter', system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03', 'cv01', 'cv02';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 
 /* Immersion mode : masquer Navbar/Footer/ChatBot/CartDrawer du site
    classique pendant /3d-store. La HUD2D fournit son propre top bar.

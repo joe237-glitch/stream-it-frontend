@@ -26,6 +26,7 @@ import Floor from './Floor'
 import Hall from './Hall'
 import CategoryStand from './CategoryStand'
 import CameraRig from './CameraRig'
+import CameraIntro from './CameraIntro'
 
 /**
  * Scene V3 — Canvas R3F principal du Stream-It 3D Store premium V3.
@@ -107,6 +108,7 @@ export default function Scene({ isPortrait = false, mobileFocusKey = null }) {
           />
         ))}
 
+        {!isPortrait && <CameraIntro isPortrait={isPortrait} />}
         <CameraRig isPortrait={isPortrait} />
 
         <Preload all />

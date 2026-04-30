@@ -2,6 +2,7 @@ import { useStore3DSession } from '../hooks/useStore3DSession'
 import { STORE3D_CATEGORIES } from '../data/mockProducts'
 import MiniCartButton from './MiniCartButton'
 import Mode2DToggle from './Mode2DToggle'
+import AudioToggle from './AudioToggle'
 import ProductDrawer from './ProductDrawer'
 
 /**
@@ -41,6 +42,7 @@ export default function HUD2D({ isPortrait = false, mobileIdx = 0, onMobileNav }
         </div>
 
         <div className="store3d-topbar-right">
+          <AudioToggle />
           <Mode2DToggle />
           <MiniCartButton />
         </div>

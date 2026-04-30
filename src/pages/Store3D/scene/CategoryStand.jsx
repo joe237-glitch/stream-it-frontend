@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { Text, RoundedBox } from '@react-three/drei'
 import ProductCard3D from './ProductCard3D'
 import StreamingRearWall from './StreamingRearWall'
+import IPTVFloatingPanels from './IPTVFloatingPanels'
+import { FONT_INTER_BOLD, FONT_INTER_MEDIUM } from './fonts'
 import { productsByCategory } from '../data/mockProducts'
 
 /**
@@ -141,8 +143,7 @@ export default function CategoryStand({
         outlineWidth={0}
         material-transparent
         material-opacity={0.95}
-        letterSpacing={-0.02}
-        fontWeight="bold"
+        letterSpacing={-0.025}
       >
         {category.label}
       </Text>
@@ -167,9 +168,14 @@ export default function CategoryStand({
         {category.description}
       </Text>
 
-      {/* Rear-wall holographique pour Streaming uniquement */}
+      {/* Rear-wall holographique pour Streaming */}
       {category.key === 'streaming' && isFull && (
         <StreamingRearWall accent={accent} />
+      )}
+
+      {/* Écrans flottants pour IPTV (V4) — disponibles en light + full */}
+      {category.key === 'iptv' && (
+        <IPTVFloatingPanels accent={category.accent} tier={tier} />
       )}
 
       {/* 3 cartes produits */}
