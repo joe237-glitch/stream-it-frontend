@@ -1,29 +1,35 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Edges, Float, Text } from '@react-three/drei'
+import { Edges, Float, MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei'
 import * as THREE from 'three'
 
 /**
- * ProductCard3D — carte produit signature Stream-It (référence : moodboard P6.V2/V4).
+ * ProductCard3D V2 — premium glass card avec MeshTransmissionMaterial drei.
  *
- * Implémentation premium :
- * - Géométrie : box arrondie 1.4 × 2.0 × 0.08 (ratio carte fidélité)
- * - Matériau : meshPhysicalMaterial avec transmission 0.6 (verre semi-translucide),
- *   thickness 0.25, roughness 0.18, clearcoat 1.0, ior 1.42, attenuationColor
- *   par produit (couleur emissive de l'accent).
- * - Bordure : drei <Edges /> couleur accent pour l'effet "carte holographique"
- * - Float drei : oscillation légère pour vie sans rotation continue
- * - Hover : intensité emissive × 2.4, scale × 1.04, easeOutCubic 220 ms
- * - Click : déclenche openProduct dans le store session (HUD ouvre le drawer)
- *
- * Sur tier 'light' : on dégrade en meshStandardMaterial sans transmission
- * (transmission est ~5x plus coûteux). Le rendu reste premium grâce aux Edges
- * et à la lumière scène.
+ * Améliorations vs V0 :
+ * - `MeshTransmissionMaterial` (drei) → vraie transmission optique avec dispersion
+ *   chromatique subtile, IOR 1.45, thickness physique. Bien plus crédible que
+ *   meshPhysicalMaterial standard.
+ * - Géométrie `<RoundedBox>` drei avec radius 0.06 et smoothness 6 pour des
+ *   bords arrondis premium (vs box dur du v0).
+ * - Edge trace animé : un point lumineux parcourt le périmètre en boucle ~3 s.
+ *   Donne l'effet "carte holographique" du moodboard P6.
+ * - Glyphe catégorique abstrait (pas de logo tiers) : symbole ▶ / ⌘ / ◆ extrudé
+ *   en `<Text>` plus grand pour identification rapide visuelle.
+ * - Hover : tilt vers la caméra + scale 1.06 + boost emissive + uplift Y 0.08.
+ * - Light tier : `meshStandardMaterial` premium avec roughness 0.18 pour rester
+ *   économe en RT pass mais lisible.
  */
 
-const W = 1.4
-const H = 2.0
-const D = 0.08
+const W = 1.5
+const H = 2.1
+const D = 0.1
+
+const CATEGORY_GLYPHS = {
+  streaming: '▶',
+  iptv: '⌘',
+  gaming: '◆',
+}
 
 export default function ProductCard3D({
   product,
@@ -32,70 +38,72 @@ export default function ProductCard3D({
   tier = 'full',
 }) {
   const meshRef = useRef()
+  const groupRef = useRef()
+  const tracerRef = useRef()
   const [hovered, setHovered] = useState(false)
-  const targetEmissive = hovered ? 2.4 : 0.85
-  const targetScale = hovered ? 1.04 : 1.0
-  const accentColor = new THREE.Color(product.accent || '#7c3aed')
+  const accentColor = useMemo(
+    () => new THREE.Color(product.accent || '#7c3aed'),
+    [product.accent],
+  )
+  const lightAccent = useMemo(() => accentColor.clone().lerp(new THREE.Color('#ffffff'), 0.45), [accentColor])
 
-  useFrame((_, delta) => {
-    if (!meshRef.current) return
+  const targetEmissive = hovered ? 1.6 : 0.55
+  const targetScale = hovered ? 1.06 : 1.0
+  const targetTilt = hovered ? 0.18 : 0
+  const targetLift = hovered ? 0.08 : 0
+
+  useFrame((state, delta) => {
+    const k = Math.min(1, delta * 9)
+    if (!meshRef.current || !groupRef.current) return
     const m = meshRef.current
-    const k = Math.min(1, delta * 8) // easing
+    const g = groupRef.current
     m.scale.x += (targetScale - m.scale.x) * k
     m.scale.y += (targetScale - m.scale.y) * k
     m.scale.z += (targetScale - m.scale.z) * k
+    g.rotation.x += (-targetTilt - g.rotation.x) * k
+    g.position.y += (position[1] + targetLift - g.position.y) * k
     if (m.material && m.material.emissiveIntensity != null) {
-      m.material.emissiveIntensity +=
-        (targetEmissive - m.material.emissiveIntensity) * k
+      m.material.emissiveIntensity += (targetEmissive - m.material.emissiveIntensity) * k
+    }
+    // Edge tracer : point lumineux qui parcourt le périmètre
+    if (tracerRef.current) {
+      const t = state.clock.elapsedTime * 0.5 + (product.id?.length || 0) * 0.2
+      const u = (t % 1)
+      const halfW = W * 0.5
+      const halfH = H * 0.5
+      const perim = 2 * (W + H)
+      const d = u * perim
+      let x, y
+      if (d < W) { x = -halfW + d; y = halfH }
+      else if (d < W + H) { x = halfW; y = halfH - (d - W) }
+      else if (d < 2 * W + H) { x = halfW - (d - W - H); y = -halfH }
+      else { x = -halfW; y = -halfH + (d - 2 * W - H) }
+      tracerRef.current.position.set(x, y, D / 2 + 0.012)
+      tracerRef.current.material.opacity = hovered ? 1 : 0.7
     }
   })
-
-  const handleClick = (e) => {
-    e.stopPropagation()
-    onClick && onClick(product)
-  }
 
   const handleEnter = (e) => {
     e.stopPropagation()
     setHovered(true)
     document.body.style.cursor = 'pointer'
   }
-
   const handleLeave = (e) => {
     e.stopPropagation()
     setHovered(false)
     document.body.style.cursor = 'default'
   }
+  const handleClick = (e) => {
+    e.stopPropagation()
+    onClick && onClick(product)
+  }
 
-  // Tier light : standard material light + emissive accent
-  const material =
-    tier === 'light' ? (
-      <meshStandardMaterial
-        color="#1a1730"
-        metalness={0.6}
-        roughness={0.35}
-        emissive={accentColor}
-        emissiveIntensity={0.85}
-      />
-    ) : (
-      <meshPhysicalMaterial
-        color="#0e0c1c"
-        metalness={0.35}
-        roughness={0.2}
-        transmission={0.55}
-        thickness={0.25}
-        ior={1.42}
-        clearcoat={1}
-        clearcoatRoughness={0.08}
-        attenuationColor={accentColor}
-        attenuationDistance={2.5}
-        emissive={accentColor}
-        emissiveIntensity={0.85}
-      />
-    )
+  // Material switch tier
+  const useTransmission = tier === 'full'
+  const glyph = CATEGORY_GLYPHS[product.category] || '◆'
 
-  const card = (
-    <group position={position}>
+  const cardBody = (
+    <group ref={groupRef} position={position}>
       <mesh
         ref={meshRef}
         onClick={handleClick}
@@ -103,66 +111,120 @@ export default function ProductCard3D({
         onPointerOut={handleLeave}
         castShadow
       >
-        <boxGeometry args={[W, H, D]} />
-        {material}
-        <Edges threshold={15} color={accentColor} scale={1.001} />
+        <RoundedBox args={[W, H, D]} radius={0.06} smoothness={6}>
+          {useTransmission ? (
+            <MeshTransmissionMaterial
+              backside={false}
+              samples={6}
+              resolution={256}
+              transmission={1}
+              roughness={0.12}
+              thickness={0.5}
+              ior={1.45}
+              chromaticAberration={0.06}
+              anisotropy={0.3}
+              distortion={0.1}
+              distortionScale={0.4}
+              temporalDistortion={0.05}
+              clearcoat={1}
+              attenuationColor={accentColor}
+              attenuationDistance={1.6}
+              color="#0d0c1c"
+            />
+          ) : (
+            <meshStandardMaterial
+              color="#0e0c1c"
+              metalness={0.55}
+              roughness={0.18}
+              emissive={accentColor}
+              emissiveIntensity={0.55}
+            />
+          )}
+        </RoundedBox>
+        <Edges threshold={15} color={lightAccent} scale={1.001} />
       </mesh>
+
+      {/* Edge tracer : point lumineux qui circule */}
+      <mesh ref={tracerRef}>
+        <sphereGeometry args={[0.025, 12, 12]} />
+        <meshBasicMaterial color={lightAccent} transparent opacity={0.85} toneMapped={false} />
+      </mesh>
+
+      {/* Glyph catégorique grand format en arrière-plan de la carte */}
+      <Text
+        position={[0, 0.55, D / 2 + 0.005]}
+        fontSize={0.5}
+        color={accentColor}
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={0.55}
+        outlineWidth={0}
+      >
+        {glyph}
+      </Text>
 
       {/* Title */}
       <Text
-        position={[0, 0.35, D / 2 + 0.005]}
-        fontSize={0.11}
+        position={[0, 0.05, D / 2 + 0.005]}
+        fontSize={0.115}
         color="#f4f0ff"
         anchorX="center"
         anchorY="middle"
-        maxWidth={W * 0.85}
+        maxWidth={W * 0.86}
         textAlign="center"
         outlineWidth={0}
+        letterSpacing={-0.01}
       >
         {product.name}
       </Text>
 
-      {/* Duration badge */}
+      {/* Duration badge background */}
+      <mesh position={[0, -0.18, D / 2 + 0.003]}>
+        <planeGeometry args={[0.55, 0.13]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.35} toneMapped={false} />
+      </mesh>
       <Text
-        position={[0, 0.14, D / 2 + 0.005]}
+        position={[0, -0.18, D / 2 + 0.005]}
         fontSize={0.07}
-        color={'#' + accentColor.getHexString()}
+        color={lightAccent}
         anchorX="center"
         anchorY="middle"
+        outlineWidth={0}
+        letterSpacing={0.06}
       >
-        {product.duration_label}
+        {(product.duration_label || '').toUpperCase()}
       </Text>
 
       {/* Price */}
       <Text
         position={[0, -0.55, D / 2 + 0.005]}
-        fontSize={0.16}
+        fontSize={0.18}
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
         outlineWidth={0}
+        letterSpacing={-0.02}
       >
-        {formatPrice(product.price)} {product.currency}
+        {formatPrice(product.price)}
       </Text>
-
-      {/* Subtle CTA hint */}
       <Text
-        position={[0, -0.85, D / 2 + 0.005]}
+        position={[0, -0.74, D / 2 + 0.005]}
         fontSize={0.055}
         color="#9aa0c0"
         anchorX="center"
         anchorY="middle"
+        letterSpacing={0.1}
       >
-        Cliquer pour voir
+        {product.currency} · DÉTAILS
       </Text>
     </group>
   )
 
-  if (tier === 'light') return card
+  if (tier === 'light') return cardBody
 
   return (
-    <Float speed={1.2} rotationIntensity={0.18} floatIntensity={0.22}>
-      {card}
+    <Float speed={1.05} rotationIntensity={0.12} floatIntensity={0.18}>
+      {cardBody}
     </Float>
   )
 }

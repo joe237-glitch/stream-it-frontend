@@ -6,38 +6,42 @@ import {
   Environment,
   PerformanceMonitor,
   Preload,
+  SoftShadows,
 } from '@react-three/drei'
-import { EffectComposer, Bloom, DepthOfField, Vignette } from '@react-three/postprocessing'
-import { ToneMappingMode } from 'postprocessing'
+import {
+  Bloom,
+  ChromaticAberration,
+  DepthOfField,
+  EffectComposer,
+  Noise,
+  Vignette,
+} from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
 import { STORE3D_CATEGORIES } from '../data/mockProducts'
 import { useStore3DSession } from '../hooks/useStore3DSession'
 import Lights from './Lights'
 import Floor from './Floor'
-import Particles from './Particles'
+import Hall from './Hall'
 import CategoryStand from './CategoryStand'
 import CameraRig from './CameraRig'
 
 /**
- * Scene — Canvas R3F principal du Stream-It 3D Store.
+ * Scene V2 — Canvas R3F principal du Stream-It 3D Store premium.
  *
- * Architecture :
- *   <Canvas>
- *     <fog />
- *     <Environment preset="city" /> (drei) — IBL doux, charge ~150 KB
- *     <Lights tier=... />
- *     <Floor tier=... />
- *     <Particles tier=... />
- *     <CategoryStand /> × 3
- *     <CameraRig />
- *     <EffectComposer> Bloom + DoF + Vignette + ToneMapping ACES (full only) </EffectComposer>
- *     <AdaptiveDpr /> + <AdaptiveEvents /> + <PerformanceMonitor />
- *   </Canvas>
+ * Améliorations vs V0 :
+ * - HDRI Environment preset 'apartment' (chargement ~150 KB) pour reflets
+ *   réalistes sur les MeshTransmissionMaterial des cartes
+ * - SoftShadows drei pour ombres naturelles (full tier seulement)
+ * - Pile post-process complète : Bloom selective + DoF + ChromaticAberration
+ *   + Vignette + Noise très subtil = look "investor-ready"
+ * - Hall component remplace l'ancien Floor+Particles : architecture immersive
+ *   (podium + arche + pylônes + Stars + Sparkles)
+ * - PerformanceMonitor avec hysteresis 35-58 fps pour bascule auto tier light
  *
- * PerformanceMonitor : si < 35 fps mesurés sur 200 ms → bascule tier 'light'
- * (désactive Bloom + DoF + Particles + Sparkles + Floor reflector). Utile aussi
- * comme garde-fou si le DeviceProbe a sur-estimé l'appareil.
+ * Tier 'light' : pas de transmission cards, pas de bloom, pas de stars,
+ * pas de god rays. Garde l'architecture mais en standard material.
  */
 export default function Scene() {
   const tier = useStore3DSession((s) => s.tier) || 'full'
@@ -49,22 +53,23 @@ export default function Scene() {
   return (
     <Canvas
       shadows={isFull}
-      camera={{ position: [0, 1.7, 6.5], fov: 58, near: 0.1, far: 80 }}
+      camera={{ position: [0, 1.7, 6.5], fov: 56, near: 0.1, far: 80 }}
       gl={{
         antialias: isFull,
         powerPreference: 'high-performance',
         alpha: false,
         stencil: false,
         toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.05,
         outputColorSpace: THREE.SRGBColorSpace,
       }}
       dpr={isFull ? [1, 1.6] : [1, 1.0]}
     >
-      <color attach="background" args={['#06060d']} />
-      <fog attach="fog" args={['#0a0a14', 6, 28]} />
+      <color attach="background" args={['#05050d']} />
+      <fog attach="fog" args={['#08081a', 7, 32]} />
 
       <PerformanceMonitor
-        bounds={() => [35, 60]}
+        bounds={() => [35, 58]}
         flipflops={3}
         onDecline={() => {
           if (tier === 'full') setTier('light')
@@ -72,10 +77,11 @@ export default function Scene() {
       />
 
       <Suspense fallback={null}>
-        <Environment preset="city" background={false} />
+        <Environment preset={isFull ? 'apartment' : 'city'} background={false} />
+        {isFull && <SoftShadows samples={10} size={6} focus={0.6} />}
         <Lights tier={tier} />
         <Floor tier={tier} />
-        <Particles tier={tier} />
+        <Hall tier={tier} />
 
         {STORE3D_CATEGORIES.map((cat) => (
           <CategoryStand
@@ -95,13 +101,22 @@ export default function Scene() {
       {isFull && (
         <EffectComposer multisampling={2} disableNormalPass>
           <Bloom
-            intensity={0.45}
-            luminanceThreshold={0.45}
-            luminanceSmoothing={0.9}
+            intensity={0.55}
+            luminanceThreshold={0.4}
+            luminanceSmoothing={0.85}
             mipmapBlur
           />
-          <DepthOfField focusDistance={0.04} focalLength={0.05} bokehScale={1.5} />
-          <Vignette eskil={false} offset={0.15} darkness={0.55} />
+          <DepthOfField focusDistance={0.045} focalLength={0.06} bokehScale={1.8} />
+          <ChromaticAberration
+            offset={[0.0008, 0.0008]}
+            blendFunction={BlendFunction.NORMAL}
+          />
+          <Vignette eskil={false} offset={0.18} darkness={0.6} />
+          <Noise
+            premultiply
+            blendFunction={BlendFunction.SOFT_LIGHT}
+            opacity={0.18}
+          />
         </EffectComposer>
       )}
 

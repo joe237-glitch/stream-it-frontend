@@ -3,18 +3,17 @@ import { STORE3D_CATEGORIES } from '../data/mockProducts'
 import MiniCartButton from './MiniCartButton'
 import Mode2DToggle from './Mode2DToggle'
 import ProductDrawer from './ProductDrawer'
+import MiniMap from './MiniMap'
 
 /**
- * HUD2D — overlay DOM par-dessus le Canvas R3F.
+ * HUD2D V2 — overlay DOM premium par-dessus le Canvas R3F.
  *
- * Composé de :
- * - top-left : badge titre + bouton Retour site classique
- * - top-right : MiniCartButton + Mode2DToggle
- * - bottom-center : 3 chips catégories (focus camera)
- * - drawer : ProductDrawer (slide-in droite quand activeProduct != null)
- *
- * Pas de tailwind dynamique côté HUD (pour rester léger), tout en CSS-in-JS
- * inline minimaliste. Le HUD reste 2D pur — la cinématique vient de la Scene.
+ * Améliorations vs V0 :
+ * - Top bar frosted glass continu (plutôt que pills isolés)
+ * - MiniMap top-right qui montre les 3 stands en plan radial
+ * - Chips bottom avec ripple animation et glow accent par catégorie
+ * - Banner tier light en gradient avec icône
+ * - Backdrop blur 14 px partout (ressenti premium iOS)
  */
 export default function HUD2D() {
   const focus = useStore3DSession((s) => s.focusCategory)
@@ -23,74 +22,44 @@ export default function HUD2D() {
 
   return (
     <>
-      {/* Top-left : titre + retour */}
-      <div
-        className="store3d-hud-top-left"
-        style={{
-          position: 'fixed',
-          top: 16,
-          left: 16,
-          zIndex: 50,
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-        }}
-      >
-        <a
-          href="/"
-          className="store3d-pill"
-          aria-label="Retour au site classique"
-          title="Retour au site classique"
-        >
-          ← Site classique
-        </a>
-        <span
-          className="store3d-pill store3d-pill-strong"
-          style={{ pointerEvents: 'none' }}
-        >
-          Boutique 3D · Stream-It
-        </span>
+      {/* Top bar continu */}
+      <div className="store3d-topbar">
+        <div className="store3d-topbar-left">
+          <a
+            href="/"
+            className="store3d-back"
+            aria-label="Retour au site classique"
+            title="Retour au site classique"
+          >
+            <span className="store3d-back-arrow">←</span>
+            <span>Site classique</span>
+          </a>
+          <div className="store3d-divider" />
+          <div className="store3d-brand">
+            <span className="store3d-brand-dot" />
+            <span className="store3d-brand-text">Boutique 3D</span>
+          </div>
+        </div>
+
+        <div className="store3d-topbar-right">
+          <Mode2DToggle />
+          <MiniCartButton />
+        </div>
       </div>
 
-      {/* Top-right : panier + mode */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 16,
-          right: 16,
-          zIndex: 50,
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-        }}
-      >
-        <Mode2DToggle />
-        <MiniCartButton />
-      </div>
+      {/* MiniMap (top-right secondaire) */}
+      <MiniMap />
 
-      {/* Bottom-center : focus catégories */}
-      <div
-        className="store3d-hud-categories"
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 50,
-          display: 'flex',
-          gap: 10,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          maxWidth: 'calc(100vw - 32px)',
-        }}
-      >
+      {/* Bottom chips */}
+      <div className="store3d-chip-bar" role="toolbar" aria-label="Catégories">
         <button
           type="button"
           className={
-            'store3d-chip' + (focus === null ? ' store3d-chip-active' : '')
+            'store3d-chip' + (focus === null ? ' is-active' : '')
           }
           onClick={() => setFocus(null)}
         >
+          <span className="store3d-chip-icon">⌂</span>
           Vue d'ensemble
         </button>
         {STORE3D_CATEGORIES.map((cat) => (
@@ -99,28 +68,16 @@ export default function HUD2D() {
             type="button"
             className={
               'store3d-chip' +
-              (focus === cat.key ? ' store3d-chip-active' : '')
+              (focus === cat.key ? ' is-active' : '')
             }
             style={{
-              borderColor:
-                focus === cat.key ? cat.accent : 'rgba(255,255,255,0.18)',
-              boxShadow:
-                focus === cat.key
-                  ? `0 0 0 1px ${cat.accent}, 0 0 24px -6px ${cat.accent}`
-                  : 'none',
+              '--chip-accent': cat.accent,
             }}
             onClick={() => setFocus(cat.key)}
           >
             <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 999,
-                background: cat.accent,
-                display: 'inline-block',
-                marginRight: 8,
-                boxShadow: `0 0 10px ${cat.accent}`,
-              }}
+              className="store3d-chip-dot"
+              style={{ background: cat.accent, boxShadow: `0 0 12px ${cat.accent}` }}
             />
             {cat.label}
           </button>
@@ -129,24 +86,9 @@ export default function HUD2D() {
 
       {/* Tier light banner */}
       {tier === 'light' && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 49,
-            padding: '6px 14px',
-            borderRadius: 999,
-            background: 'rgba(245, 185, 66, 0.12)',
-            border: '1px solid rgba(245, 185, 66, 0.4)',
-            color: '#f5b942',
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 0.3,
-          }}
-        >
-          Mode 3D allégé — effets désactivés pour fluidité
+        <div className="store3d-tier-banner">
+          <span className="store3d-tier-icon">⚡</span>
+          Mode 3D allégé · effets désactivés pour fluidité
         </div>
       )}
 

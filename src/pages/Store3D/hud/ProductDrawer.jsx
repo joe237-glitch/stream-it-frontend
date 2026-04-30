@@ -1,178 +1,181 @@
+import { useEffect, useState } from 'react'
 import { useStore3DSession } from '../hooks/useStore3DSession'
 import { useCart } from '../../../context/CartContext'
 import { useToast } from '../../../components/Toast'
 
 /**
- * ProductDrawer — panneau latéral droit qui s'ouvre quand un ProductCard3D est
- * cliqué. Slide-in 240 ms. Affiche détails + CTA "Ajouter au panier".
+ * ProductDrawer V2 — drawer adaptatif desktop / mobile.
  *
- * Utilise CartContext (addItem) et Toast existants — aucun backend touché.
+ * - Desktop ≥ 768 px → panneau latéral droit (slide-in 240 ms)
+ * - Mobile < 768 px → bottom sheet plein écran (slide-up depuis bas)
+ *
+ * Contenu :
+ * - Badge catégorie + glyph holographique
+ * - Titre + durée pill
+ * - Description
+ * - Spec list générée (3 puces synthétiques par produit)
+ * - Prix + Ajouter au panier (gradient violet)
+ * - Note "Prototype interne · paiement non actif"
+ *
+ * Animations :
+ * - Backdrop opacity + backdrop-filter blur
+ * - Slide easing cubic-bezier(0.22, 1, 0.36, 1)
+ * - Bouton CTA pulse au mount
  */
+
+const CATEGORY_GLYPHS = {
+  streaming: '▶',
+  iptv: '⌘',
+  gaming: '◆',
+}
+
+function useIsMobile() {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onResize = () => setM(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return m
+}
+
+const SPEC_HINTS = {
+  streaming: [
+    'Multi-écrans simultanés',
+    'Activation < 5 min',
+    'Garantie 100 % du temps payé',
+  ],
+  iptv: [
+    '12 000+ chaînes internationales',
+    'EPG intégré + replay 7 j',
+    'Streaming 1080p stable',
+  ],
+  gaming: [
+    'Code livré instantanément',
+    'Compatible toutes régions',
+    'Validité illimitée',
+  ],
+}
+
 export default function ProductDrawer() {
   const product = useStore3DSession((s) => s.activeProduct)
   const close = useStore3DSession((s) => s.closeProduct)
   const { addItem, setIsOpen: setCartOpen } = useCart()
   const toast = useToast()
   const isOpen = !!product
+  const isMobile = useIsMobile()
 
   const handleAdd = () => {
     if (!product) return
-    // CartContext attend { product: { id, name, price, ... } }
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
       currency: product.currency,
-      _source: 'store3d',
+      _source: 'store3d_v2',
     })
     toast(`${product.name} ajouté au panier`, 'success')
     close()
     setCartOpen(true)
   }
 
+  const accent = product?.accent || '#7c3aed'
+  const glyph = CATEGORY_GLYPHS[product?.category] || '◆'
+  const specs = SPEC_HINTS[product?.category] || []
+
+  // ESC pour fermer
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') close() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, close])
+
   return (
     <>
-      {/* Backdrop */}
       <div
+        className="store3d-drawer-backdrop"
+        data-open={isOpen}
         onClick={close}
         aria-hidden="true"
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 60,
-          background: isOpen
-            ? 'rgba(2, 2, 8, 0.55)'
-            : 'rgba(2, 2, 8, 0)',
-          backdropFilter: isOpen ? 'blur(2px)' : 'none',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          transition: 'background 220ms ease, backdrop-filter 220ms ease',
-        }}
       />
 
-      {/* Drawer */}
       <aside
         role="dialog"
         aria-modal="true"
         aria-labelledby="store3d-drawer-title"
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          height: '100vh',
-          width: 'min(420px, 100vw)',
-          zIndex: 61,
-          background:
-            'linear-gradient(180deg, rgba(20,16,42,0.96) 0%, rgba(8,8,18,0.96) 100%)',
-          borderLeft: '1px solid rgba(124, 58, 237, 0.35)',
-          boxShadow: '-30px 0 60px -20px rgba(124, 58, 237, 0.35)',
-          color: 'white',
-          padding: 24,
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-        }}
+        className={'store3d-drawer ' + (isMobile ? 'is-mobile' : 'is-desktop')}
+        data-open={isOpen}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Glyph holographique en arrière-plan */}
+        <div
+          className="store3d-drawer-glyph"
+          style={{ color: accent }}
+          aria-hidden="true"
+        >
+          {glyph}
+        </div>
+
+        <header className="store3d-drawer-head">
           <span
-            style={{
-              fontSize: 11,
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-              color: '#9aa0c0',
-              fontWeight: 600,
-            }}
+            className="store3d-drawer-cat"
+            style={{ color: accent, borderColor: accent + '66' }}
           >
             {product?.category}
           </span>
           <button
             type="button"
+            className="store3d-drawer-close"
             onClick={close}
             aria-label="Fermer"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              color: '#9aa0c0',
-              fontSize: 22,
-              cursor: 'pointer',
-              padding: 4,
-            }}
           >
             ✕
           </button>
-        </div>
+        </header>
 
-        <h2
-          id="store3d-drawer-title"
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
+        <h2 id="store3d-drawer-title" className="store3d-drawer-title">
           {product?.name}
         </h2>
 
         <div
-          style={{
-            display: 'inline-flex',
-            alignSelf: 'flex-start',
-            padding: '4px 10px',
-            borderRadius: 999,
-            background: `${product?.accent || '#7c3aed'}22`,
-            border: `1px solid ${product?.accent || '#7c3aed'}66`,
-            color: product?.accent || '#a78bfa',
-            fontSize: 12,
-            fontWeight: 600,
-          }}
+          className="store3d-drawer-pill"
+          style={{ background: accent + '22', borderColor: accent + '66', color: accent }}
         >
           {product?.duration_label}
         </div>
 
-        <p style={{ color: '#cdd0e4', fontSize: 14, lineHeight: 1.55, margin: 0 }}>
-          {product?.description}
-        </p>
+        <p className="store3d-drawer-desc">{product?.description}</p>
 
-        <div
-          style={{
-            marginTop: 'auto',
-            paddingTop: 18,
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <span style={{ color: '#9aa0c0', fontSize: 13 }}>Prix</span>
-            <span style={{ fontSize: 26, fontWeight: 700 }}>
-              {product ? new Intl.NumberFormat('fr-FR').format(product.price) : '—'}{' '}
-              <span style={{ fontSize: 14, color: '#9aa0c0' }}>{product?.currency}</span>
+        <ul className="store3d-drawer-specs" aria-label="Caractéristiques">
+          {specs.map((s, i) => (
+            <li key={i}>
+              <span className="store3d-drawer-check" style={{ background: accent }}>✓</span>
+              {s}
+            </li>
+          ))}
+        </ul>
+
+        <footer className="store3d-drawer-foot">
+          <div className="store3d-drawer-price-row">
+            <span className="store3d-drawer-price-label">Prix</span>
+            <span className="store3d-drawer-price">
+              {product ? new Intl.NumberFormat('fr-FR').format(product.price) : '—'}
+              <span className="store3d-drawer-currency">{product?.currency}</span>
             </span>
           </div>
           <button
             type="button"
             onClick={handleAdd}
             disabled={!product}
-            style={{
-              width: '100%',
-              padding: '12px 18px',
-              borderRadius: 12,
-              border: 'none',
-              background:
-                'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: product ? 'pointer' : 'not-allowed',
-              boxShadow: '0 12px 30px -10px rgba(124, 58, 237, 0.7)',
-            }}
+            className="store3d-drawer-cta"
           >
             Ajouter au panier
           </button>
-          <p style={{ marginTop: 10, fontSize: 11, color: '#6b6f8a', textAlign: 'center' }}>
+          <p className="store3d-drawer-note">
             Prototype interne · paiement non actif sur ce périmètre
           </p>
-        </div>
+        </footer>
       </aside>
     </>
   )
