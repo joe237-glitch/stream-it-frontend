@@ -1,30 +1,69 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useDrag } from '@use-gesture/react'
 import Scene from './scene/Scene'
 import HUD2D from './hud/HUD2D'
 import Fallback2D from './hud/Fallback2D'
 import { probeDeviceTier } from './perf/DeviceProbe'
 import { useStore3DSession } from './hooks/useStore3DSession'
+import { STORE3D_CATEGORIES } from './data/mockProducts'
 import './styles/store3d.css'
 
 /**
- * Store3D — entry point /3d-store.
+ * Store3D V3 — entry point /3d-store.
  *
- * 1. Feature flag VITE_STORE_3D_ENABLED. Si === 'false' → Navigate('/') immédiat
- *    (kill-switch sans toucher à App.jsx).
+ * V3 changes :
+ * - Détecte mobile portrait (window.innerWidth < 768)
+ * - Sur mobile : single-stand mode + swipe horizontal pour naviguer entre
+ *   catégories (gestures @use-gesture/react)
+ * - Indicateur visuel des stands accessibles (dots) en bas
+ * - Sinon comportement V2 (3 stands desktop, fallback 2D, force 2D)
+ *
+ * 1. Feature flag VITE_STORE_3D_ENABLED. Si === 'false' → Navigate('/').
  * 2. DeviceProbe asynchrone : tier 'fallback' | 'light' | 'full'.
  * 3. Pendant la probe → BootSplash.
- * 4. Si fallback OU forceFallback (Mode2DToggle) → Fallback2D.
- * 5. Sinon → Scene (R3F) + HUD2D overlay.
- *
- * Pas de Suspense ici : le code 3D est déjà dans un chunk lazy via App.jsx
- * (React.lazy). Le Suspense interne à Scene gère les Environment.
+ * 4. Si fallback OU forceFallback → Fallback2D.
+ * 5. Sinon → Scene + HUD2D (avec mode mobile single-stand si portrait).
  */
+function useIsPortrait() {
+  const [isPortrait, set] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768,
+  )
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onResize = () => set(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return isPortrait
+}
+
 export default function Store3D() {
   const flagDisabled = import.meta.env.VITE_STORE_3D_ENABLED === 'false'
   const [tierLocal, setTierLocal] = useState(null)
   const setTier = useStore3DSession((s) => s.setTier)
   const force = useStore3DSession((s) => s.forceFallback)
+  const isPortrait = useIsPortrait()
+  const [mobileIdx, setMobileIdx] = useState(0)
+
+  const mobileFocusKey = isPortrait
+    ? STORE3D_CATEGORIES[mobileIdx]?.key
+    : null
+
+  // Swipe gestures pour mobile
+  const bind = useDrag(
+    ({ swipe: [sx], last }) => {
+      if (!isPortrait || !last) return
+      if (sx === 1) {
+        // swipe right → previous
+        setMobileIdx((i) => Math.max(0, i - 1))
+      } else if (sx === -1) {
+        // swipe left → next
+        setMobileIdx((i) => Math.min(STORE3D_CATEGORIES.length - 1, i + 1))
+      }
+    },
+    { swipe: { distance: 50, velocity: 0.4 } },
+  )
 
   useEffect(() => {
     if (flagDisabled) return
@@ -36,8 +75,6 @@ export default function Store3D() {
     })
     const previous = document.title
     document.title = 'Boutique 3D · Stream-It'
-    // Cache le Navbar/Footer/ChatBot/CartDrawer du site classique pendant
-    // l'immersion 3D (la HUD2D fournit son propre top bar)
     document.body.classList.add('store3d-active')
     return () => {
       cancelled = true
@@ -56,10 +93,15 @@ export default function Store3D() {
     <div
       className="fixed inset-0 z-30"
       aria-label="Boutique 3D Stream-It"
-      style={{ background: '#06060d' }}
+      style={{ background: '#06060d', touchAction: isPortrait ? 'pan-y' : 'auto' }}
+      {...(isPortrait ? bind() : {})}
     >
-      <Scene />
-      <HUD2D />
+      <Scene isPortrait={isPortrait} mobileFocusKey={mobileFocusKey} />
+      <HUD2D
+        isPortrait={isPortrait}
+        mobileIdx={mobileIdx}
+        onMobileNav={setMobileIdx}
+      />
     </div>
   )
 }

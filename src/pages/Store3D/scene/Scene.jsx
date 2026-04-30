@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import {
   AdaptiveDpr,
@@ -28,32 +28,46 @@ import CategoryStand from './CategoryStand'
 import CameraRig from './CameraRig'
 
 /**
- * Scene V2 — Canvas R3F principal du Stream-It 3D Store premium.
+ * Scene V3 — Canvas R3F principal du Stream-It 3D Store premium V3.
  *
- * Améliorations vs V0 :
- * - HDRI Environment preset 'apartment' (chargement ~150 KB) pour reflets
- *   réalistes sur les MeshTransmissionMaterial des cartes
- * - SoftShadows drei pour ombres naturelles (full tier seulement)
- * - Pile post-process complète : Bloom selective + DoF + ChromaticAberration
- *   + Vignette + Noise très subtil = look "investor-ready"
- * - Hall component remplace l'ancien Floor+Particles : architecture immersive
- *   (podium + arche + pylônes + Stars + Sparkles)
- * - PerformanceMonitor avec hysteresis 35-58 fps pour bascule auto tier light
+ * Améliorations vs V2 :
+ * - Caméra FOV élargi 60° (vs 56°) pour ne plus couper les cartes en vue
+ *   d'ensemble desktop
+ * - Mode mobile : si isPortrait, on n'affiche que le stand actif (focus
+ *   catégorie par défaut = streaming), camera.fov plus serrée
+ * - Hall sans pylônes (V3 Hall.jsx) → composition aérée
+ * - Tier light renforcé : downgrade à 32 fps (vs 35) pour éviter flickering
  *
- * Tier 'light' : pas de transmission cards, pas de bloom, pas de stars,
- * pas de god rays. Garde l'architecture mais en standard material.
+ * Détection mobile via window.innerWidth < 768.
  */
-export default function Scene() {
+export default function Scene({ isPortrait = false, mobileFocusKey = null }) {
   const tier = useStore3DSession((s) => s.tier) || 'full'
   const setTier = useStore3DSession((s) => s.setTier)
   const openProduct = useStore3DSession((s) => s.openProduct)
+  const setFocusCategory = useStore3DSession((s) => s.setFocusCategory)
 
   const isFull = tier === 'full'
 
+  // Sur mobile portrait, on force le focus sur la catégorie active
+  useEffect(() => {
+    if (isPortrait && mobileFocusKey) {
+      setFocusCategory(mobileFocusKey)
+    }
+  }, [isPortrait, mobileFocusKey, setFocusCategory])
+
+  // Mobile : on ne rend qu'un stand pour économiser draws + perf
+  const visibleCategories = isPortrait && mobileFocusKey
+    ? STORE3D_CATEGORIES.filter((c) => c.key === mobileFocusKey)
+    : STORE3D_CATEGORIES
+
+  const cameraInitial = isPortrait
+    ? { position: [0, 1.6, 5.5], fov: 64 }
+    : { position: [0, 1.75, 7.0], fov: 60 }
+
   return (
     <Canvas
-      shadows={isFull}
-      camera={{ position: [0, 1.7, 6.5], fov: 56, near: 0.1, far: 80 }}
+      shadows={isFull && !isPortrait}
+      camera={{ ...cameraInitial, near: 0.1, far: 80 }}
       gl={{
         antialias: isFull,
         powerPreference: 'high-performance',
@@ -69,7 +83,7 @@ export default function Scene() {
       <fog attach="fog" args={['#08081a', 7, 32]} />
 
       <PerformanceMonitor
-        bounds={() => [35, 58]}
+        bounds={() => [32, 58]}
         flipflops={3}
         onDecline={() => {
           if (tier === 'full') setTier('light')
@@ -78,22 +92,22 @@ export default function Scene() {
 
       <Suspense fallback={null}>
         <Environment preset={isFull ? 'apartment' : 'city'} background={false} />
-        {isFull && <SoftShadows samples={10} size={6} focus={0.6} />}
+        {isFull && !isPortrait && <SoftShadows samples={10} size={6} focus={0.6} />}
         <Lights tier={tier} />
         <Floor tier={tier} />
         <Hall tier={tier} />
 
-        {STORE3D_CATEGORIES.map((cat) => (
+        {visibleCategories.map((cat) => (
           <CategoryStand
             key={cat.key}
             category={cat}
-            position={cat.position}
+            position={isPortrait ? [0, 0, -3.5] : cat.position}
             onProductClick={openProduct}
             tier={tier}
           />
         ))}
 
-        <CameraRig />
+        <CameraRig isPortrait={isPortrait} />
 
         <Preload all />
       </Suspense>
@@ -101,21 +115,21 @@ export default function Scene() {
       {isFull && (
         <EffectComposer multisampling={2} disableNormalPass>
           <Bloom
-            intensity={0.55}
-            luminanceThreshold={0.4}
+            intensity={0.5}
+            luminanceThreshold={0.42}
             luminanceSmoothing={0.85}
             mipmapBlur
           />
-          <DepthOfField focusDistance={0.045} focalLength={0.06} bokehScale={1.8} />
+          <DepthOfField focusDistance={0.045} focalLength={0.06} bokehScale={1.6} />
           <ChromaticAberration
-            offset={[0.0008, 0.0008]}
+            offset={[0.0007, 0.0007]}
             blendFunction={BlendFunction.NORMAL}
           />
           <Vignette eskil={false} offset={0.18} darkness={0.6} />
           <Noise
             premultiply
             blendFunction={BlendFunction.SOFT_LIGHT}
-            opacity={0.18}
+            opacity={0.16}
           />
         </EffectComposer>
       )}

@@ -3,19 +3,18 @@ import { STORE3D_CATEGORIES } from '../data/mockProducts'
 import MiniCartButton from './MiniCartButton'
 import Mode2DToggle from './Mode2DToggle'
 import ProductDrawer from './ProductDrawer'
-import MiniMap from './MiniMap'
 
 /**
- * HUD2D V2 — overlay DOM premium par-dessus le Canvas R3F.
+ * HUD2D V3 — overlay DOM premium.
  *
- * Améliorations vs V0 :
- * - Top bar frosted glass continu (plutôt que pills isolés)
- * - MiniMap top-right qui montre les 3 stands en plan radial
- * - Chips bottom avec ripple animation et glow accent par catégorie
- * - Banner tier light en gradient avec icône
- * - Backdrop blur 14 px partout (ressenti premium iOS)
+ * Changements vs V2 :
+ * - SUPPRIMÉ : MiniMap radar (pas de référence MJ, jugée non premium par PM)
+ * - Mode mobile : remplace les chips desktop par un dock vertical avec
+ *   indicator de stand actif + flèches navigation (en plus du swipe)
+ * - Top bar plus aérée (espacement +4 px, typo letter-spacing affiné)
+ * - Banner tier light retravaillé (gradient + chip)
  */
-export default function HUD2D() {
+export default function HUD2D({ isPortrait = false, mobileIdx = 0, onMobileNav }) {
   const focus = useStore3DSession((s) => s.focusCategory)
   const setFocus = useStore3DSession((s) => s.setFocusCategory)
   const tier = useStore3DSession((s) => s.tier)
@@ -47,42 +46,83 @@ export default function HUD2D() {
         </div>
       </div>
 
-      {/* MiniMap (top-right secondaire) */}
-      <MiniMap />
-
-      {/* Bottom chips */}
-      <div className="store3d-chip-bar" role="toolbar" aria-label="Catégories">
-        <button
-          type="button"
-          className={
-            'store3d-chip' + (focus === null ? ' is-active' : '')
-          }
-          onClick={() => setFocus(null)}
-        >
-          <span className="store3d-chip-icon">⌂</span>
-          Vue d'ensemble
-        </button>
-        {STORE3D_CATEGORIES.map((cat) => (
+      {/* Bottom navigation : chips desktop OU dots+arrows mobile */}
+      {isPortrait ? (
+        <div className="store3d-mobile-nav" role="toolbar" aria-label="Catégories">
           <button
-            key={cat.key}
             type="button"
-            className={
-              'store3d-chip' +
-              (focus === cat.key ? ' is-active' : '')
-            }
-            style={{
-              '--chip-accent': cat.accent,
-            }}
-            onClick={() => setFocus(cat.key)}
+            className="store3d-mobile-arrow"
+            disabled={mobileIdx === 0}
+            onClick={() => onMobileNav?.(Math.max(0, mobileIdx - 1))}
+            aria-label="Catégorie précédente"
           >
-            <span
-              className="store3d-chip-dot"
-              style={{ background: cat.accent, boxShadow: `0 0 12px ${cat.accent}` }}
-            />
-            {cat.label}
+            ‹
           </button>
-        ))}
-      </div>
+          <div className="store3d-mobile-stage">
+            <div className="store3d-mobile-label">
+              {STORE3D_CATEGORIES[mobileIdx]?.label}
+            </div>
+            <div className="store3d-mobile-dots">
+              {STORE3D_CATEGORIES.map((cat, i) => (
+                <button
+                  key={cat.key}
+                  className={
+                    'store3d-mobile-dot' +
+                    (i === mobileIdx ? ' is-active' : '')
+                  }
+                  style={{ '--dot-accent': cat.accent }}
+                  onClick={() => onMobileNav?.(i)}
+                  aria-label={cat.label}
+                  aria-current={i === mobileIdx}
+                />
+              ))}
+            </div>
+            <div className="store3d-mobile-hint">Glissez ‹ ›</div>
+          </div>
+          <button
+            type="button"
+            className="store3d-mobile-arrow"
+            disabled={mobileIdx === STORE3D_CATEGORIES.length - 1}
+            onClick={() =>
+              onMobileNav?.(
+                Math.min(STORE3D_CATEGORIES.length - 1, mobileIdx + 1),
+              )
+            }
+            aria-label="Catégorie suivante"
+          >
+            ›
+          </button>
+        </div>
+      ) : (
+        <div className="store3d-chip-bar" role="toolbar" aria-label="Catégories">
+          <button
+            type="button"
+            className={'store3d-chip' + (focus === null ? ' is-active' : '')}
+            onClick={() => setFocus(null)}
+          >
+            <span className="store3d-chip-icon">⌂</span>
+            Vue d'ensemble
+          </button>
+          {STORE3D_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              className={
+                'store3d-chip' +
+                (focus === cat.key ? ' is-active' : '')
+              }
+              style={{ '--chip-accent': cat.accent }}
+              onClick={() => setFocus(cat.key)}
+            >
+              <span
+                className="store3d-chip-dot"
+                style={{ background: cat.accent, boxShadow: `0 0 12px ${cat.accent}` }}
+              />
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tier light banner */}
       {tier === 'light' && (
