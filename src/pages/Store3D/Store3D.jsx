@@ -36,9 +36,13 @@ export default function Store3D() {
     })
     const previous = document.title
     document.title = 'Boutique 3D · Stream-It'
+    // Cache le Navbar/Footer/ChatBot/CartDrawer du site classique pendant
+    // l'immersion 3D (la HUD2D fournit son propre top bar)
+    document.body.classList.add('store3d-active')
     return () => {
       cancelled = true
       document.title = previous
+      document.body.classList.remove('store3d-active')
     }
   }, [flagDisabled, setTier])
 

@@ -3,6 +3,20 @@
    Direction A "Atelier holographique" — palette violet/cyan/dark
    ============================================================ */
 
+/* Immersion mode : masquer Navbar/Footer/ChatBot/CartDrawer du site
+   classique pendant /3d-store. La HUD2D fournit son propre top bar.
+   Les composants ne sont pas démontés (Cart/Toast restent fonctionnels)
+   mais simplement invisibles. */
+body.store3d-active nav,
+body.store3d-active footer {
+  display: none !important;
+}
+body.store3d-active {
+  background: #05050d;
+  overflow: hidden;
+}
+
+
 :root {
   --s3d-bg-0: #05050d;
   --s3d-bg-1: #0a0916;
@@ -291,7 +305,8 @@
   flex-direction: column;
   gap: 14px;
   padding: 22px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: transform 280ms var(--s3d-easing);
 }
 

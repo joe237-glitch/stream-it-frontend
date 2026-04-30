@@ -1,24 +1,25 @@
 import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Edges, Float, MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei'
+import { Float, MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei'
 import * as THREE from 'three'
 
 /**
  * ProductCard3D V2 — premium glass card avec MeshTransmissionMaterial drei.
  *
  * Améliorations vs V0 :
- * - `MeshTransmissionMaterial` (drei) → vraie transmission optique avec dispersion
- *   chromatique subtile, IOR 1.45, thickness physique. Bien plus crédible que
- *   meshPhysicalMaterial standard.
- * - Géométrie `<RoundedBox>` drei avec radius 0.06 et smoothness 6 pour des
- *   bords arrondis premium (vs box dur du v0).
- * - Edge trace animé : un point lumineux parcourt le périmètre en boucle ~3 s.
- *   Donne l'effet "carte holographique" du moodboard P6.
- * - Glyphe catégorique abstrait (pas de logo tiers) : symbole ▶ / ⌘ / ◆ extrudé
- *   en `<Text>` plus grand pour identification rapide visuelle.
- * - Hover : tilt vers la caméra + scale 1.06 + boost emissive + uplift Y 0.08.
- * - Light tier : `meshStandardMaterial` premium avec roughness 0.18 pour rester
- *   économe en RT pass mais lisible.
+ * - `MeshTransmissionMaterial` (drei) → vraie transmission optique avec
+ *   dispersion chromatique subtile, IOR 1.45, anisotropy.
+ * - `<RoundedBox>` drei avec radius 0.06 + smoothness 6 = bords arrondis
+ *   premium (vs box dur du v0). RoundedBox EST un mesh, on lui attache
+ *   directement les handlers + le ref.
+ * - Edge accent via 4 plans fins violets/cyan placés sur le pourtour
+ *   (frame "néon discret") — plus stable que <Edges> sur RoundedBox
+ * - Edge tracer animé : un point lumineux parcourt le périmètre en boucle
+ * - Glyphe catégorique abstrait (▶/⌘/◆) extrudé en arrière-plan
+ * - Hover : tilt vers la caméra + scale 1.06 + boost emissive + uplift Y 0.08
+ *
+ * Tier 'light' : `meshStandardMaterial` premium roughness 0.18 + même frame
+ * néon. Économe RT pass.
  */
 
 const W = 1.5
@@ -37,7 +38,7 @@ export default function ProductCard3D({
   onClick,
   tier = 'full',
 }) {
-  const meshRef = useRef()
+  const cardRef = useRef()
   const groupRef = useRef()
   const tracerRef = useRef()
   const [hovered, setHovered] = useState(false)
@@ -45,7 +46,10 @@ export default function ProductCard3D({
     () => new THREE.Color(product.accent || '#7c3aed'),
     [product.accent],
   )
-  const lightAccent = useMemo(() => accentColor.clone().lerp(new THREE.Color('#ffffff'), 0.45), [accentColor])
+  const lightAccent = useMemo(
+    () => accentColor.clone().lerp(new THREE.Color('#ffffff'), 0.5),
+    [accentColor],
+  )
 
   const targetEmissive = hovered ? 1.6 : 0.55
   const targetScale = hovered ? 1.06 : 1.0
@@ -54,18 +58,22 @@ export default function ProductCard3D({
 
   useFrame((state, delta) => {
     const k = Math.min(1, delta * 9)
-    if (!meshRef.current || !groupRef.current) return
-    const m = meshRef.current
+    const c = cardRef.current
     const g = groupRef.current
-    m.scale.x += (targetScale - m.scale.x) * k
-    m.scale.y += (targetScale - m.scale.y) * k
-    m.scale.z += (targetScale - m.scale.z) * k
+    if (!c || !g) return
+
+    c.scale.x += (targetScale - c.scale.x) * k
+    c.scale.y += (targetScale - c.scale.y) * k
+    c.scale.z += (targetScale - c.scale.z) * k
     g.rotation.x += (-targetTilt - g.rotation.x) * k
     g.position.y += (position[1] + targetLift - g.position.y) * k
-    if (m.material && m.material.emissiveIntensity != null) {
-      m.material.emissiveIntensity += (targetEmissive - m.material.emissiveIntensity) * k
+
+    // Boost emissive du material si meshStandardMaterial (light tier)
+    if (c.material && c.material.emissiveIntensity != null) {
+      c.material.emissiveIntensity += (targetEmissive - c.material.emissiveIntensity) * k
     }
-    // Edge tracer : point lumineux qui parcourt le périmètre
+
+    // Edge tracer
     if (tracerRef.current) {
       const t = state.clock.elapsedTime * 0.5 + (product.id?.length || 0) * 0.2
       const u = (t % 1)
@@ -98,50 +106,73 @@ export default function ProductCard3D({
     onClick && onClick(product)
   }
 
-  // Material switch tier
   const useTransmission = tier === 'full'
   const glyph = CATEGORY_GLYPHS[product.category] || '◆'
 
+  // Frame néon : 4 plans fins le long des bords pour un look "carte holographique"
+  const frameOpacity = hovered ? 1 : 0.55
+
   const cardBody = (
     <group ref={groupRef} position={position}>
-      <mesh
-        ref={meshRef}
+      <RoundedBox
+        ref={cardRef}
+        args={[W, H, D]}
+        radius={0.06}
+        smoothness={6}
         onClick={handleClick}
         onPointerOver={handleEnter}
         onPointerOut={handleLeave}
         castShadow
       >
-        <RoundedBox args={[W, H, D]} radius={0.06} smoothness={6}>
-          {useTransmission ? (
-            <MeshTransmissionMaterial
-              backside={false}
-              samples={6}
-              resolution={256}
-              transmission={1}
-              roughness={0.12}
-              thickness={0.5}
-              ior={1.45}
-              chromaticAberration={0.06}
-              anisotropy={0.3}
-              distortion={0.1}
-              distortionScale={0.4}
-              temporalDistortion={0.05}
-              clearcoat={1}
-              attenuationColor={accentColor}
-              attenuationDistance={1.6}
-              color="#0d0c1c"
-            />
-          ) : (
-            <meshStandardMaterial
-              color="#0e0c1c"
-              metalness={0.55}
-              roughness={0.18}
-              emissive={accentColor}
-              emissiveIntensity={0.55}
-            />
-          )}
-        </RoundedBox>
-        <Edges threshold={15} color={lightAccent} scale={1.001} />
+        {useTransmission ? (
+          <MeshTransmissionMaterial
+            backside={false}
+            samples={6}
+            resolution={256}
+            transmission={1}
+            roughness={0.12}
+            thickness={0.5}
+            ior={1.45}
+            chromaticAberration={0.06}
+            anisotropy={0.3}
+            distortion={0.1}
+            distortionScale={0.4}
+            temporalDistortion={0.05}
+            clearcoat={1}
+            attenuationColor={accentColor}
+            attenuationDistance={1.6}
+            color="#0d0c1c"
+          />
+        ) : (
+          <meshStandardMaterial
+            color="#0e0c1c"
+            metalness={0.55}
+            roughness={0.18}
+            emissive={accentColor}
+            emissiveIntensity={0.55}
+          />
+        )}
+      </RoundedBox>
+
+      {/* Frame néon (4 plans fins) — bord top */}
+      <mesh position={[0, H / 2 - 0.005, D / 2 + 0.001]}>
+        <planeGeometry args={[W * 0.94, 0.014]} />
+        <meshBasicMaterial color={lightAccent} transparent opacity={frameOpacity} toneMapped={false} />
+      </mesh>
+      {/* bord bottom */}
+      <mesh position={[0, -H / 2 + 0.005, D / 2 + 0.001]}>
+        <planeGeometry args={[W * 0.94, 0.014]} />
+        <meshBasicMaterial color={lightAccent} transparent opacity={frameOpacity} toneMapped={false} />
+      </mesh>
+      {/* bord left */}
+      <mesh position={[-W / 2 + 0.005, 0, D / 2 + 0.001]}>
+        <planeGeometry args={[0.014, H * 0.94]} />
+        <meshBasicMaterial color={lightAccent} transparent opacity={frameOpacity} toneMapped={false} />
+      </mesh>
+      {/* bord right */}
+      <mesh position={[W / 2 - 0.005, 0, D / 2 + 0.001]}>
+        <planeGeometry args={[0.014, H * 0.94]} />
+        <meshBasicMaterial color={lightAccent} transparent opacity={frameOpacity} toneMapped={false} />
       </mesh>
 
       {/* Edge tracer : point lumineux qui circule */}
@@ -150,7 +181,7 @@ export default function ProductCard3D({
         <meshBasicMaterial color={lightAccent} transparent opacity={0.85} toneMapped={false} />
       </mesh>
 
-      {/* Glyph catégorique grand format en arrière-plan de la carte */}
+      {/* Glyph catégorique grand format en arrière-plan */}
       <Text
         position={[0, 0.55, D / 2 + 0.005]}
         fontSize={0.5}
@@ -178,7 +209,7 @@ export default function ProductCard3D({
         {product.name}
       </Text>
 
-      {/* Duration badge background */}
+      {/* Duration badge */}
       <mesh position={[0, -0.18, D / 2 + 0.003]}>
         <planeGeometry args={[0.55, 0.13]} />
         <meshBasicMaterial color="#000000" transparent opacity={0.35} toneMapped={false} />
