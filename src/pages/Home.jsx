@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import ProductCard from '../components/ProductCard'
 import PaymentModal from '../components/PaymentModal'
+import SEO from '../components/SEO'
 
 const CATEGORIES = ['Tous', 'Netflix', 'Spotify', 'Amazon Prime', 'Disney+', 'IPTV', 'Gaming', 'Abonnements Gaming', 'Cartes Cadeaux', 'Autres']
 
@@ -55,20 +56,21 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
+      <SEO />
       {/* Hero */}
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold px-4 py-2 rounded-full mb-6">
           ⚡ ACTIVATION RAPIDE · SANS CARTE BANCAIRE
         </div>
-        <h1 className="text-5xl md:text-6xl font-black mb-4 leading-tight">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black mb-4 leading-tight overflow-hidden">
           Netflix, Spotify, Prime<br/>
-          <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">& bien plus encore</span>
+          <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent inline-block w-full">& bien plus encore</span>
         </h1>
-        <p className="text-slate-500 text-lg max-w-xl mx-auto">
-          1 mois · 3 mois · 6 mois · 12 mois — Accès immédiat via Mobile Money
+        <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto px-2">
+          1 mois · 3 mois · 6 mois · 12 mois<br className="sm:hidden" /> Accès immédiat via Mobile Money
         </p>
 
-        <div className="flex items-center justify-center gap-10 mt-8">
+        <div className="flex items-center justify-center gap-6 sm:gap-10 mt-8">
           {[
             [loading ? '...' : `${activeCount}+`, 'Produits'],
             ['-80%', 'Économies'],
@@ -135,7 +137,8 @@ export default function Home() {
           onClick={() => setDetailProduct(null)}
         >
           <div
-            className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl"
+            className="rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex flex-col md:flex-row">
@@ -148,7 +151,7 @@ export default function Home() {
                 <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">
                   {detailProduct.category}
                 </p>
-                <h2 className="text-xl font-black text-white mb-1">
+                <h2 className="text-xl font-black mb-1" style={{ color: 'var(--text-1)' }}>
                   {detailProduct.name.split(' – ')[0]}
                 </h2>
                 {detailProduct.name.split(' – ')[1] && (
@@ -165,7 +168,7 @@ export default function Home() {
               </div>
 
               {/* Right: image + price + buy */}
-              <div className="md:w-64 bg-slate-800/50 flex flex-col items-center justify-center p-6 gap-4 border-t md:border-t-0 md:border-l border-white/10">
+              <div className="md:w-64 flex flex-col items-center justify-center p-6 gap-4 border-t md:border-t-0 md:border-l" style={{ background: 'var(--overlay)', borderColor: 'var(--border)' }}>
                 <div className="w-40 h-40 rounded-xl overflow-hidden bg-gradient-to-br from-indigo-900/40 to-violet-900/40 flex items-center justify-center">
                   {detailProduct.image_url ? (
                     <img
@@ -178,8 +181,8 @@ export default function Home() {
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-black text-white">
-                    {(detailProduct.price / 100).toFixed(2)} $
+                  <p className="text-3xl font-black" style={{ color: 'var(--text-1)' }}>
+                    {Math.round(detailProduct.price).toLocaleString()} XAF
                   </p>
                   {detailProduct.discount > 0 && (
                     <span className="inline-block mt-1 text-xs font-black text-white bg-green-500 px-2 py-0.5 rounded-full">

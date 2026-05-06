@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
+import ChatBot from './components/ChatBot'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -14,6 +15,13 @@ import Account from './pages/Account'
 import Admin from './pages/Admin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import Info from './pages/Info'
+import ProductDetail from './pages/ProductDetail'
+import SSOCallback from './pages/SSOCallback'
+import OAuthCallback from './pages/OAuthCallback'
+import PaymentReturn from './pages/PaymentReturn'
+import PaymentCoverage from './pages/PaymentCoverage'
+import AdminObservability from './pages/AdminObservability'
 import { useEffect } from 'react'
 
 /**
@@ -43,21 +51,29 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <ToastProvider>
-              <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+              <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)', color: 'var(--text-1)', transition: 'background 0.3s, color 0.3s' }}>
                 <SessionExpiredBanner />
                 <Navbar />
                 <div className="flex-1">
                   <Routes>
                     <Route path="/"                element={<Home />} />
+                    <Route path="/product/:id"     element={<ProductDetail />} />
                     <Route path="/login"           element={<Login />} />
                     <Route path="/register"        element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password"  element={<ResetPassword />} />
+                    <Route path="/info/:section"   element={<Info />} />
+                    <Route path="/sso-callback"    element={<SSOCallback />} />
+                    <Route path="/oauth-complete"  element={<OAuthCallback />} />
+                    <Route path="/payment/return"     element={<PaymentReturn />} />
+                    <Route path="/payment-coverage"   element={<PaymentCoverage />} />
                     <Route path="/account"         element={<ProtectedRoute><Account /></ProtectedRoute>} />
-                    <Route path="/admin"           element={<AdminRoute><Admin /></AdminRoute>} />
+                    <Route path="/admin"               element={<AdminRoute><Admin /></AdminRoute>} />
+                    <Route path="/admin/observability" element={<AdminRoute><AdminObservability /></AdminRoute>} />
                   </Routes>
                 </div>
                 <Footer />
+                <ChatBot />
                 <CartDrawer />
               </div>
             </ToastProvider>

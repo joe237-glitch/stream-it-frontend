@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import GoogleSignInButton from '../components/GoogleSignInButton'
+import SEO from '../components/SEO'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1 = form, 2 = OTP
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', password: '', confirm: '' })
   const [photo, setPhoto] = useState(null)
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
@@ -35,6 +37,7 @@ export default function Register() {
         first_name: form.first_name,
         last_name: form.last_name,
         email: form.email,
+        phone: form.phone,
         password: form.password,
       })
       setStep(2)
@@ -73,6 +76,7 @@ export default function Register() {
         first_name: form.first_name,
         last_name: form.last_name,
         email: form.email,
+        phone: form.phone,
         password: form.password,
       })
       setCountdown(60)
@@ -124,6 +128,7 @@ export default function Register() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 py-12">
+      <SEO title="Creer un compte" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-2xl font-black mx-auto mb-4">S</div>
@@ -147,6 +152,15 @@ export default function Register() {
 
           {/* ─── STEP 1: Registration Form ─────────────────── */}
           {step === 1 && (
+            <>
+            <GoogleSignInButton onError={setError} />
+
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-xs text-slate-500 uppercase tracking-wide">ou</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
             <form onSubmit={requestOtp} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -163,6 +177,10 @@ export default function Register() {
                 <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="votre@email.com" required className="input-field" />
               </div>
               <div>
+                <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">WhatsApp</label>
+                <input value={form.phone} onChange={e => set('phone', e.target.value)} type="tel" placeholder="+237 6XX XXX XXX" required className="input-field" />
+              </div>
+              <div>
                 <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">Mot de passe</label>
                 <input value={form.password} onChange={e => set('password', e.target.value)} type="password" placeholder="Minimum 8 caractères" required className="input-field" />
               </div>
@@ -174,6 +192,7 @@ export default function Register() {
                 {loading ? '⏳ Envoi du code...' : 'Continuer →'}
               </button>
             </form>
+            </>
           )}
 
           {/* ─── STEP 2: OTP Verification ──────────────────── */}

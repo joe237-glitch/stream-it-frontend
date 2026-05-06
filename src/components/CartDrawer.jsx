@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
@@ -9,6 +10,7 @@ export default function CartDrawer() {
   const { items, removeItem, updateQty, clearCart, cartTotal, isOpen, setIsOpen } = useCart()
   const { isLoggedIn } = useAuth()
   const toast = useToast()
+  const navigate = useNavigate()
   const [balance, setBalance] = useState(null)
   const [showPayment, setShowPayment] = useState(false)
   const [walletLoading, setWalletLoading] = useState(false)
@@ -74,7 +76,7 @@ export default function CartDrawer() {
                 <p className="text-sm font-bold truncate">{product.name.split(' – ')[0]}</p>
                 <p className="text-xs text-slate-500 truncate">{product.name.split(' – ').slice(1).join(' – ')}</p>
                 <p className="text-xs text-indigo-400 font-semibold mt-0.5">
-                  {Math.round(product.price * 655 / 100).toLocaleString()} XAF × {quantity}
+                  {Math.round(product.price).toLocaleString()} XAF × {quantity}
                 </p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -101,9 +103,27 @@ export default function CartDrawer() {
               </p>
             )}
 
-            <button onClick={() => setShowPayment(true)} className="w-full btn-primary py-3 text-sm">
-              📱 Payer par Mobile Money
+            <button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  setIsOpen(false)
+                  navigate('/register?redirect=/')
+                  return
+                }
+                setShowPayment(true)
+              }}
+              className="w-full btn-primary py-3 text-sm"
+            >
+              {isLoggedIn ? '📱 Payer par Mobile Money' : '🔐 Se connecter pour payer'}
             </button>
+            {!isLoggedIn && (
+              <p className="text-center text-xs text-slate-500">
+                Déjà un compte ?{' '}
+                <button onClick={() => { setIsOpen(false); navigate('/login?redirect=/') }} className="text-indigo-400 hover:text-indigo-300">
+                  Connexion
+                </button>
+              </p>
+            )}
 
             {isLoggedIn && (
               <button

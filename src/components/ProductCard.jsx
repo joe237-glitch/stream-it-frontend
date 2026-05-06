@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
@@ -58,18 +59,18 @@ export default function ProductCard({ product, onBuy, onDetail }) {
 
       {/* Infos */}
       <div className="p-3 flex flex-col flex-1">
-        <p className="font-bold text-sm leading-tight line-clamp-1">
+        <Link to={`/product/${product.id}`} className="font-bold text-sm leading-tight line-clamp-1 hover:text-indigo-400 transition-colors">
           {CATEGORY_EMOJI[product.category]} {product.name.split(' – ')[0]}
-        </p>
-        <p className="text-slate-500 text-xs mb-2">
+        </Link>
+        <Link to={`/product/${product.id}`} className="text-slate-500 text-xs mb-2 hover:text-slate-300 transition-colors block">
           {product.name.split(' – ').slice(1).join(' – ')}
-        </p>
+        </Link>
 
         <div className="mt-auto">
           {isAvailable ? (
             <>
-              <p className="text-lg font-black text-white">
-                {(product.price / 100).toFixed(2)} $
+              <p className="text-lg font-black" style={{ color: 'var(--text-1)' }}>
+                {Math.round(product.price).toLocaleString()} XAF
               </p>
               {isAdmin() ? (
                 <button

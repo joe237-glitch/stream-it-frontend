@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Footer() {
+  const { theme } = useTheme()
   const year = new Date().getFullYear()
 
   return (
@@ -11,8 +13,9 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-black">S</div>
-              <span className="font-black text-white tracking-tight">Stream-It</span>
+              <span className={`block ${theme === 'light' ? 'bg-slate-900 px-2.5 py-1 rounded-xl' : ''}`}>
+                <img src="/img/logo.svg" alt="Stream-It" className="h-7" />
+              </span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
               Abonnements digitaux premium livrés instantanément. Netflix, Spotify, gaming et plus — payez via Mobile Money.
@@ -34,10 +37,11 @@ export default function Footer() {
           <div>
             <p className="text-white font-bold text-sm mb-4 uppercase tracking-widest">À propos</p>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li className="hover:text-slate-300 transition-colors cursor-default">Qui sommes-nous</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Comment ça marche</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Paiements acceptés</li>
-              <li className="hover:text-slate-300 transition-colors cursor-default">Politique de remboursement</li>
+              <li><Link to="/info/about" className="hover:text-indigo-400 transition-colors">Qui sommes-nous</Link></li>
+              <li><Link to="/info/how-it-works" className="hover:text-indigo-400 transition-colors">Comment ça marche</Link></li>
+              <li><Link to="/payment-coverage" className="hover:text-indigo-400 transition-colors">Modes de paiement disponibles</Link></li>
+              <li><Link to="/info/payments" className="hover:text-indigo-400 transition-colors">Paiements acceptés</Link></li>
+              <li><Link to="/info/refunds" className="hover:text-indigo-400 transition-colors">Politique de remboursement</Link></li>
             </ul>
           </div>
 
@@ -53,13 +57,13 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <span>💬</span>
-                <a href="https://wa.me/237000000000" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
+                <a href="https://wa.me/237655521445" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
                   WhatsApp Support
                 </a>
               </li>
               <li className="flex items-start gap-2">
                 <span>🕐</span>
-                <span>Lun–Sam · 8h–22h</span>
+                <span>24/7 · Disponible tous les jours</span>
               </li>
             </ul>
 
@@ -71,6 +75,15 @@ export default function Footer() {
                 </span>
               ))}
             </div>
+
+            {/* Countries */}
+            <div className="flex gap-1.5 mt-4 flex-wrap">
+              {['🇨🇲 Cameroun', '🇨🇮 Côte d\'Ivoire', '🇧🇫 Burkina Faso', '🇧🇯 Bénin', '🇹🇬 Togo', '🇨🇩 RD Congo', '🇨🇬 Congo', '🇬🇦 Gabon', '🇺🇬 Ouganda'].map(c => (
+                <span key={c} className="text-[10px] bg-white/5 border border-white/10 text-slate-500 px-2 py-0.5 rounded-full">
+                  {c}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -78,9 +91,9 @@ export default function Footer() {
         <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <p>© {year} Stream-It. Tous droits réservés.</p>
           <div className="flex gap-5">
-            <span className="hover:text-slate-400 cursor-default transition-colors">Conditions d'utilisation</span>
-            <span className="hover:text-slate-400 cursor-default transition-colors">Confidentialité</span>
-            <span className="hover:text-slate-400 cursor-default transition-colors">Mentions légales</span>
+            <Link to="/info/terms" className="hover:text-slate-400 transition-colors">Conditions d'utilisation</Link>
+            <Link to="/info/privacy" className="hover:text-slate-400 transition-colors">Confidentialité</Link>
+            <Link to="/info/legal" className="hover:text-slate-400 transition-colors">Mentions légales</Link>
           </div>
         </div>
       </div>

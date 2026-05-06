@@ -67,6 +67,7 @@ export const Auth = {
   passwordRequestOtp: (data) => api.post('/auth/me/password/request-otp', data),
   emailRequestOtp:    (data) => api.post('/auth/me/email/request-otp', data),
   changeEmail:        (data) => api.put('/auth/me/email', data),
+  googleOAuth:        (data) => api.post('/auth/oauth/google', data),
 }
 
 // ─── Products ──────────────────────────────────────────────────
@@ -118,15 +119,33 @@ export const ServiceAccounts = {
 export const Users = {
   getAll:       (q = '')     => api.get(`/users${q}`),
   getById:      (id)         => api.get(`/users/${id}`),
-  toggleActive: (id)         => api.patch(`/users/${id}/toggle-active`),
-  changeRole:   (id, r)      => api.patch(`/users/${id}/role`, { role: r }),
+  toggleActive: (id)         => api.put(`/users/${id}/status`),
+  changeRole:   (id, r)      => api.put(`/users/${id}/role`, { role: r }),
   adjustWallet: (id, data)   => api.post(`/users/${id}/wallet`, data),
+  delete:       (id)         => api.delete(`/users/${id}`),
 }
 
-// ─── Payment ──────────────────────────────────────────────────
+// ─── Payment (legacy SoleasPay) ────────────────────────────────
 export const Payment = {
   pay:    (data)               => api.post('/payment/pay', data),
   verify: (orderId, payId)     => api.get(`/payment/verify?orderId=${orderId}${payId ? '&payId=' + payId : ''}`),
+}
+
+// ─── Payments (GeniusPay hosted checkout) ─────────────────────
+// Backend: POST /api/payments/create -> { orderId, reference, checkout_url, status }
+// The user is redirected to checkout_url, then returned to /payment/return.
+//
+// Coverage matrix (Phase 1) — public, no auth, ETag-aware. Single source of
+// truth for which countries / currencies / operators Stream-It exposes.
+export const Payments = {
+  create:   (data)    => api.post('/payments/create', data),
+  status:   (orderId) => api.get(`/payments/${orderId}/status`),
+  recheck:  (orderId) => api.post(`/payments/${orderId}/recheck`),
+  coverage: (etag)    => api.get('/payments/coverage', {
+    headers: etag ? { 'If-None-Match': etag } : undefined,
+    // Don't throw on 304 — let the hook treat it as "cache still valid".
+    validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
+  }),
 }
 
 // ─── Wallet ───────────────────────────────────────────────────
@@ -138,6 +157,13 @@ export const Wallet = {
 // ─── Admin Emails ───────────────────────────────────────────
 export const EmailLogs = {
   getAll: (q = '') => api.get(`/admin/emails${q}`),
+}
+
+// ─── Admin Observability ────────────────────────────────────
+// Returns the staging payment-health snapshot (auth admin required).
+// See backend: routes/observability.routes.js + services/observabilityService.js
+export const Observability = {
+  snapshot: () => api.get('/admin/observability/snapshot'),
 }
 
 export default api

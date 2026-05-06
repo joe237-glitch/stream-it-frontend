@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
+import GoogleSignInButton from '../components/GoogleSignInButton'
+import SEO from '../components/SEO'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -22,8 +24,10 @@ export default function Login() {
     setLoading(true)
     try {
       const r = await Auth.login({ email, password })
-      login(r.data.data.token, r.data.data.user)
-      window.location.href = redirect
+      const user = r.data.data.user
+      login(r.data.data.token, user)
+      // Admin goes to dashboard, client goes to account
+      window.location.href = user.role === 'admin' ? '/admin' : redirect
     } catch (err) {
       setError(err.response?.data?.message || 'Identifiants incorrects')
       setLoading(false)
@@ -32,6 +36,7 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+      <SEO title="Connexion" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-2xl font-black mx-auto mb-4">S</div>
@@ -41,6 +46,14 @@ export default function Login() {
 
         <div className="card p-8">
           {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{error}</div>}
+
+          <GoogleSignInButton onError={setError} />
+
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-xs text-slate-500 uppercase tracking-wide">ou</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
 
           <form onSubmit={submit} className="space-y-4">
             <div>

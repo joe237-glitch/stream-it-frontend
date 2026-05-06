@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
 import PaymentModal from '../components/PaymentModal'
+import SEO from '../components/SEO'
 
 const TABS = [
   { id: 'subscriptions', label: '📱 Abonnements' },
@@ -15,16 +16,17 @@ const TABS = [
 
 function StatusBadge({ status }) {
   const map = {
-    active:    'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    pending:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
-    expired:   'bg-slate-500/15 text-slate-400 border-slate-500/20',
-    cancelled: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
-    paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    success:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    failed:    'bg-red-500/15 text-red-400 border-red-500/20',
-    completed: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+    active:             'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    pending:            'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
+    waiting_assignment: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    expired:            'bg-slate-500/15 text-slate-400 border-slate-500/20',
+    cancelled:          'bg-slate-500/15 text-slate-400 border-slate-500/20',
+    paid:               'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    success:            'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    failed:             'bg-red-500/15 text-red-400 border-red-500/20',
+    completed:          'bg-blue-500/15 text-blue-400 border-blue-500/20',
   }
-  const labels = { active:'Actif', pending:'En attente', expired:'Expiré', cancelled:'Annulé', paid:'Payé', success:'Succès', failed:'Échoué', completed:'Complété' }
+  const labels = { active:'Actif', pending:'En attente', waiting_assignment:"En cours d'attribution", expired:'Expiré', cancelled:'Annulé', paid:'Payé', success:'Succès', failed:'Échoué', completed:'Complété' }
   return <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${map[status] || 'bg-slate-500/15 text-slate-400 border-slate-500/20'}`}>{labels[status] || status}</span>
 }
 
@@ -36,10 +38,27 @@ function formatAmount(n) {
   return `${parseFloat(n).toLocaleString('fr-FR')} XAF`
 }
 
+const VALID_TABS = ['subscriptions', 'orders', 'transactions', 'wallet', 'profile']
+
 export default function Account() {
-  const { user, logout, login } = useAuth()
+  const { user, logout, login, isAdmin } = useAuth()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const toast = useToast()
-  const [tab, setTab] = useState('subscriptions')
+
+  // Admin should go to /admin, not /account
+  useEffect(() => {
+    if (isAdmin()) navigate('/admin', { replace: true })
+  }, [isAdmin, navigate])
+
+  const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'subscriptions'
+  const [tab, setTab] = useState(initialTab)
+  const tabsContainerRef = useRef(null)
+
+  const handleTabChange = (id) => {
+    setTab(id)
+    setSearchParams({ tab: id }, { replace: true })
+  }
   const [subs, setSubs] = useState([])
   const [orders, setOrders] = useState([])
   const [txns, setTxns] = useState([])
@@ -77,6 +96,14 @@ export default function Account() {
     Transactions.mine().then(r => { setTxns(r.data.data || []); setLoading(p => ({...p, txns: false})) }).catch(() => setLoading(p => ({...p, txns: false})))
     Wallet.getBalance().then(r => setWalletBalance(r.data.data?.balance ?? 0)).catch(() => {})
   }, [])
+
+  // Auto-scroll active tab into view on mobile
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const activeBtn = tabsContainerRef.current.querySelector(`[data-tab="${tab}"]`)
+      if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [tab])
 
   const saveProfile = async () => {
     try {
@@ -194,45 +221,53 @@ export default function Account() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <SEO title="Mon compte" />
       {/* Header */}
-      <div className="card rounded-2xl p-6 mb-6 flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">
-          {meData?.profile_photo
-            ? <img src={meData.profile_photo} alt="avatar" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-2xl font-black">{meData?.first_name?.[0]}{meData?.last_name?.[0]}</div>
-          }
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-extrabold">
-            {meData?.first_name || meData?.last_name ? `${meData?.first_name} ${meData?.last_name}` : meData?.email}
-          </h1>
-          <p className="text-slate-500 text-sm">{meData?.email}</p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meData?.role === 'admin' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-white/5 text-slate-500 border border-white/10'}`}>
-              {meData?.role === 'admin' ? '⭐ Admin' : 'Client'}
-            </span>
-            <span className="text-xs text-slate-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full font-mono">
-              ID #{meData?.id}
-            </span>
+      <div className="card rounded-2xl p-5 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">
+            {meData?.profile_photo
+              ? <img src={meData.profile_photo} alt="avatar" className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-xl font-black">{meData?.first_name?.[0]}{meData?.last_name?.[0]}</div>
+            }
           </div>
-        </div>
-        <div className="hidden sm:flex flex-col items-end gap-2">
-          {walletBalance !== null && (
-            <div className="text-right">
-              <p className="text-xs text-slate-500">Solde</p>
-              <p className="font-extrabold text-emerald-400">{walletBalance.toLocaleString()} XAF</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base sm:text-xl font-extrabold truncate">
+              {meData?.first_name || meData?.last_name ? `${meData?.first_name} ${meData?.last_name}` : meData?.email}
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm truncate">{meData?.email}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${meData?.role === 'admin' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-white/5 text-slate-500 border border-white/10'}`}>
+                {meData?.role === 'admin' ? '⭐ Admin' : 'Client'}
+              </span>
+              <span className="text-xs text-slate-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full font-mono">
+                ID #{meData?.id}
+              </span>
             </div>
-          )}
-          <Link to="/" className="btn-secondary text-sm py-2 px-4">🛒 Boutique</Link>
+          </div>
+          <Link to="/" className="hidden sm:flex btn-secondary text-sm py-2 px-4 flex-shrink-0">🛒 Boutique</Link>
         </div>
+        {/* Solde — visible sur tous les écrans */}
+        {walletBalance !== null && (
+          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-slate-500">💰 Solde disponible</p>
+              <p className="text-xl font-extrabold text-emerald-400">{walletBalance.toLocaleString()} XAF</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/" className="sm:hidden text-xs text-slate-400 hover:text-white transition-colors px-3 py-2 rounded-xl hover:bg-white/5">🛒 Boutique</Link>
+              <button onClick={() => setRechargeModal(true)} className="btn-primary text-xs py-2 px-4">+ Recharger</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-white/5 mb-6 overflow-x-auto">
+      <div ref={tabsContainerRef} className="flex gap-1 border-b border-white/5 mb-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px ${tab === t.id ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+          <button key={t.id} data-tab={t.id} onClick={() => handleTabChange(t.id)}
+            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px flex-shrink-0 ${tab === t.id ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
             {t.label}
           </button>
         ))}
@@ -266,10 +301,16 @@ export default function Account() {
                     <div>📅 Début : <span className="text-slate-300">{formatDate(s.start_date)}</span></div>
                     <div>⌛ Fin : <span className="text-slate-300">{formatDate(s.end_date)}</span></div>
                   </div>
-                  {s.login_email ? (
+                  {s.status === 'cancelled' ? (
+                    <div className="text-center text-xs text-red-400 py-2">❌ Abonnement annulé</div>
+                  ) : s.status === 'expired' ? (
+                    <div className="text-center text-xs text-slate-500 py-2">⌛ Abonnement expiré</div>
+                  ) : s.status === 'waiting_assignment' ? (
+                    <div className="text-center text-xs text-amber-400/80 py-2">⏳ Accès en cours de préparation — vous serez notifié par email</div>
+                  ) : (s.login_email || s.activation_code) ? (
                     <button onClick={() => setCredModal(s)}
                       className="w-full py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
-                      🔑 Voir mes identifiants
+                      {s.delivery_type === 'gift_card' ? '🎁 Voir mon code d\'activation' : s.delivery_type === 'invite_link' ? '🔗 Voir mon invitation' : '🔑 Voir mes identifiants'}
                     </button>
                   ) : (
                     <div className="text-center text-xs text-slate-600 py-2">⏳ Attribution en cours...</div>
@@ -351,7 +392,7 @@ export default function Account() {
               {walletBalance !== null ? walletBalance.toLocaleString() : '—'} <span className="text-2xl text-emerald-600">XAF</span>
             </p>
             <p className="text-xs text-slate-600">
-              ≈ {walletBalance !== null ? (walletBalance / 655).toFixed(2) : '—'} $
+              ≈ {walletBalance !== null ? (walletBalance / 656).toFixed(2) : '—'} USD
             </p>
             <button
               onClick={() => setRechargeModal(true)}
@@ -367,22 +408,26 @@ export default function Account() {
               <h3 className="font-bold text-sm">Historique du portefeuille</h3>
             </div>
             <div className="divide-y divide-white/5">
-              {txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.payment_method === 'wallet').length === 0 ? (
+              {txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.type === 'refund' || t.payment_method === 'wallet').length === 0 ? (
                 <p className="text-center text-slate-600 py-8 text-sm">Aucune opération</p>
-              ) : txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.payment_method === 'wallet').map(t => {
+              ) : txns.filter(t => t.type === 'wallet_credit' || t.type === 'wallet_debit' || t.type === 'refund' || t.payment_method === 'wallet').map(t => {
                 const isCredit = t.type === 'wallet_credit'
+                const isRefund = t.type === 'refund'
                 const isFailed = t.status === 'failed'
+                const label = isRefund
+                  ? '↩ Remboursement'
+                  : isCredit
+                    ? (isFailed ? '✗ Recharge échouée' : '+ Recharge')
+                    : '− Achat wallet'
                 return (
                   <div key={t.id} className="flex items-center justify-between px-5 py-3">
                     <div>
-                      <p className="text-sm font-semibold">
-                        {isCredit ? (isFailed ? '✗ Recharge échouée' : '+ Recharge') : '− Achat wallet'}
-                      </p>
+                      <p className="text-sm font-semibold">{label}</p>
                       <p className="text-xs text-slate-500">{formatDate(t.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-extrabold ${isFailed ? 'text-slate-500 line-through' : isCredit ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {isCredit ? '+' : '−'}{formatAmount(t.amount)}
+                      <p className={`font-extrabold ${isFailed ? 'text-slate-500 line-through' : (isCredit || isRefund) ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {(isCredit || isRefund) ? '+' : '−'}{formatAmount(t.amount)}
                       </p>
                       <StatusBadge status={t.status} />
                     </div>
@@ -549,31 +594,97 @@ export default function Account() {
 
       {/* Credentials Modal */}
       {credModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="card rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setCredModal(null)}>
+          <div className="card rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold">🔑 Vos identifiants</h3>
+              <h3 className="font-extrabold">
+                {credModal.delivery_type === 'gift_card'   ? '🎁 Code d\'activation'
+                 : credModal.delivery_type === 'invite_link' ? '🔗 Votre invitation'
+                 : '🔑 Vos identifiants'}
+              </h3>
               <button onClick={() => setCredModal(null)} className="text-slate-500 hover:text-white w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">✕</button>
             </div>
+
             <div className="space-y-3">
-              {credModal.profile_slot && (
-                <div className="bg-white/5 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 mb-1">Profil / Slot</p>
-                  <p className="font-bold text-sm">{credModal.profile_slot}</p>
-                </div>
-              )}
-              {[['Email de connexion', credModal.login_email], ['Mot de passe', credModal.login_password]].map(([label, val]) => (
-                <div key={label} className="bg-white/5 rounded-xl p-3">
-                  <p className="text-xs text-slate-500 mb-1">{label}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-sm flex-1 break-all">{val}</p>
-                    <button onClick={() => { navigator.clipboard.writeText(val || ''); toast('Copié !', 'success') }}
-                      className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+
+              {/* 🎁 GIFT CARD */}
+              {credModal.delivery_type === 'gift_card' && (
+                <>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-center">
+                    <p className="text-xs text-amber-400/70 mb-2 font-semibold uppercase tracking-wide">Code d'activation</p>
+                    <p className="font-black text-lg text-amber-400 break-all font-mono tracking-widest">{credModal.activation_code}</p>
                   </div>
-                </div>
-              ))}
+                  <button onClick={() => { navigator.clipboard.writeText(credModal.activation_code || ''); toast('Code copié !', 'success') }}
+                    className="w-full py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-sm font-bold hover:bg-amber-500/20 transition-colors">
+                    📋 Copier le code
+                  </button>
+                  <div className="bg-white/5 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                    <p className="font-semibold text-slate-400">Comment utiliser :</p>
+                    <p>1. Ouvrez le site / app officiel du service</p>
+                    <p>2. Accédez à "Cartes cadeaux" ou "Ajouter des fonds"</p>
+                    <p>3. Entrez le code ci-dessus et validez</p>
+                  </div>
+                </>
+              )}
+
+              {/* 🔗 INVITE LINK */}
+              {credModal.delivery_type === 'invite_link' && (
+                <>
+                  <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
+                    <p className="text-xs text-violet-400/70 mb-2 font-semibold uppercase tracking-wide">Invitation envoyée depuis</p>
+                    <p className="font-bold text-sm text-violet-300 break-all">{credModal.login_email || '—'}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+                    <p className="font-semibold text-slate-400">Comment rejoindre :</p>
+                    <p>1. Vérifiez votre boîte email pour l'invitation</p>
+                    <p>2. Cliquez sur "Rejoindre" dans l'email reçu</p>
+                    <p>3. Créez votre compte ou connectez-vous</p>
+                    <p className="text-slate-600 pt-1">Si vous ne trouvez pas l'email, vérifiez vos spams.</p>
+                  </div>
+                </>
+              )}
+
+              {/* 👥 SHARED ACCOUNT */}
+              {(credModal.delivery_type === 'shared_account' || !credModal.delivery_type) && (
+                <>
+                  {credModal.profile_slot && (
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">👤 Profil / Slot</p>
+                      <p className="font-black text-base text-indigo-400">{credModal.profile_slot}</p>
+                    </div>
+                  )}
+                  {[['📧 Email de connexion', credModal.login_email], ['🔒 Mot de passe', credModal.login_password]].map(([label, val]) => val ? (
+                    <div key={label} className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm flex-1 break-all font-mono">{val}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(val); toast('Copié !', 'success') }}
+                          className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+                      </div>
+                    </div>
+                  ) : null)}
+                </>
+              )}
+
+              {/* 🔑 DIRECT CREDENTIALS */}
+              {credModal.delivery_type === 'direct_credentials' && (
+                <>
+                  {[['📧 Email de connexion', credModal.login_email], ['🔒 Mot de passe', credModal.login_password]].map(([label, val]) => val ? (
+                    <div key={label} className="bg-white/5 rounded-xl p-3">
+                      <p className="text-xs text-slate-500 mb-1">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm flex-1 break-all font-mono">{val}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(val); toast('Copié !', 'success') }}
+                          className="text-slate-500 hover:text-white text-xs bg-white/10 px-2 py-1 rounded-lg flex-shrink-0">📋</button>
+                      </div>
+                    </div>
+                  ) : null)}
+                </>
+              )}
+
             </div>
-            <p className="text-xs text-slate-600 mt-4">⚠️ Ne partagez jamais ces identifiants.</p>
+            <p className="text-xs text-slate-600 mt-4">⚠️ Ne partagez jamais ces informations avec quiconque.</p>
           </div>
         </div>
       )}
