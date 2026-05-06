@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useTheme } from '../context/ThemeContext'
 import { useTranslation } from 'react-i18next'
+import Avatar from './Avatar'
 
 export default function Navbar() {
   const { user, isLoggedIn, isAdmin, logout } = useAuth()
@@ -83,12 +84,12 @@ export default function Navbar() {
           {isLoggedIn ? (
             <div className="hidden sm:flex items-center gap-2">
               <div className="flex items-center gap-2 text-sm text-slate-300">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  {user?.profile_photo
-                    ? <img src={user.profile_photo} alt="avatar" className="w-full h-full object-cover" />
-                    : <>{user?.first_name?.[0]}{user?.last_name?.[0]}</>
-                  }
-                </div>
+                <Avatar
+                  src={user?.profile_photo}
+                  name={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email}
+                  size="sm"
+                  className="flex-shrink-0"
+                />
                 <span className="hidden lg:block">{user?.first_name}</span>
               </div>
               <button onClick={handleLogout} className="text-xs text-slate-500 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/10">

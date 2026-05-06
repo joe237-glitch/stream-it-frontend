@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
 import PaymentModal from '../components/PaymentModal'
 import PasswordInput from '../components/PasswordInput'
+import Avatar from '../components/Avatar'
 import SEO from '../components/SEO'
 
 const TABS = [
@@ -227,12 +228,13 @@ export default function Account() {
       {/* Header */}
       <div className="card rounded-2xl p-5 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600">
-            {meData?.profile_photo
-              ? <img src={meData.profile_photo} alt="avatar" className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center text-xl font-black">{meData?.first_name?.[0]}{meData?.last_name?.[0]}</div>
-            }
-          </div>
+          <Avatar
+            src={meData?.profile_photo}
+            name={`${meData?.first_name || ''} ${meData?.last_name || ''}`.trim() || meData?.email}
+            size="md"
+            rounded="rounded-2xl"
+            className="flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <h1 className="text-base sm:text-xl font-extrabold truncate">
               {meData?.first_name || meData?.last_name ? `${meData?.first_name} ${meData?.last_name}` : meData?.email}
@@ -449,14 +451,13 @@ export default function Account() {
 
             {/* Photo de profil */}
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-600 flex-shrink-0">
-                {newPhotoPreview
-                  ? <img src={newPhotoPreview} className="w-full h-full object-cover" alt="preview" />
-                  : user?.profile_photo
-                    ? <img src={user.profile_photo} className="w-full h-full object-cover" alt="avatar" />
-                    : <div className="w-full h-full flex items-center justify-center text-2xl font-black">{user?.first_name?.[0]}{user?.last_name?.[0]}</div>
-                }
-              </div>
+              <Avatar
+                src={newPhotoPreview || user?.profile_photo}
+                name={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email}
+                size="lg"
+                rounded="rounded-2xl"
+                className="flex-shrink-0"
+              />
               <div>
                 <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-slate-300 transition-colors">
                   📸 Changer la photo

@@ -39,8 +39,8 @@ export default function Login() {
       <SEO title="Connexion" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block mb-4" aria-label="Stream-It">
-            <img src="/img/logo.svg" alt="Stream-It" className="h-10 mx-auto" />
+          <Link to="/" className="inline-flex justify-center mb-4 mx-auto" aria-label="Stream-It">
+            <img src="/img/logo-icon.svg" alt="Stream-It" className="h-12" />
           </Link>
           <h1 className="text-3xl font-black">Connexion</h1>
           <p className="text-slate-500 mt-1">Accédez à vos abonnements</p>

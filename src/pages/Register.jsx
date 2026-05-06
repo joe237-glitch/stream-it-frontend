@@ -132,8 +132,8 @@ export default function Register() {
       <SEO title="Creer un compte" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block mb-4" aria-label="Stream-It">
-            <img src="/img/logo.svg" alt="Stream-It" className="h-10 mx-auto" />
+          <Link to="/" className="inline-flex justify-center mb-4 mx-auto" aria-label="Stream-It">
+            <img src="/img/logo-icon.svg" alt="Stream-It" className="h-12" />
           </Link>
           <h1 className="text-3xl font-black">
             {step === 1 ? 'Créer un compte' : 'Vérification'}
