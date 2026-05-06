@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { Subscriptions, Orders, Transactions, Auth, Wallet } from '../api/client'
 import PaymentModal from '../components/PaymentModal'
+import PasswordInput from '../components/PasswordInput'
 import SEO from '../components/SEO'
 
 const TABS = [
@@ -495,8 +496,8 @@ export default function Account() {
                   <>
                     <input value={emailForm.new_email} onChange={e => setEmailForm(p => ({...p, new_email: e.target.value}))}
                       type="email" placeholder="Nouvel email" className="input-field text-sm" />
-                    <input value={emailForm.password} onChange={e => setEmailForm(p => ({...p, password: e.target.value}))}
-                      type="password" placeholder="Votre mot de passe actuel" className="input-field text-sm" />
+                    <PasswordInput value={emailForm.password} onChange={e => setEmailForm(p => ({...p, password: e.target.value}))}
+                      placeholder="Votre mot de passe actuel" className="input-field text-sm pr-12" autoComplete="current-password" />
                     <button onClick={requestEmailOtp} disabled={otpLoading}
                       className="w-full btn-primary py-2.5 text-xs disabled:opacity-50">
                       {otpLoading ? '⏳ Envoi...' : 'Envoyer le code de vérification'}
@@ -537,9 +538,9 @@ export default function Account() {
 
             {pwdStep === 1 && (
               <>
-                <input value={pwdForm.old} onChange={e => setPwdForm(p => ({...p, old: e.target.value}))} type="password" placeholder="Ancien mot de passe" className="input-field" />
-                <input value={pwdForm.new} onChange={e => setPwdForm(p => ({...p, new: e.target.value}))} type="password" placeholder="Nouveau mot de passe" className="input-field" />
-                <input value={pwdForm.confirm} onChange={e => setPwdForm(p => ({...p, confirm: e.target.value}))} type="password" placeholder="Confirmer le nouveau" className="input-field" />
+                <PasswordInput value={pwdForm.old} onChange={e => setPwdForm(p => ({...p, old: e.target.value}))} placeholder="Ancien mot de passe" autoComplete="current-password" />
+                <PasswordInput value={pwdForm.new} onChange={e => setPwdForm(p => ({...p, new: e.target.value}))} placeholder="Nouveau mot de passe" autoComplete="new-password" />
+                <PasswordInput value={pwdForm.confirm} onChange={e => setPwdForm(p => ({...p, confirm: e.target.value}))} placeholder="Confirmer le nouveau" autoComplete="new-password" />
                 <button onClick={requestPwdOtp} disabled={otpLoading} className="w-full btn-secondary py-3 text-sm disabled:opacity-50">
                   {otpLoading ? '⏳ Envoi du code...' : '🔐 Changer le mot de passe'}
                 </button>

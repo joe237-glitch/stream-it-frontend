@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Auth } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import PasswordInput from '../components/PasswordInput'
 import SEO from '../components/SEO'
 
 export default function Register() {
@@ -184,11 +185,11 @@ export default function Register() {
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">Mot de passe</label>
-                <input value={form.password} onChange={e => set('password', e.target.value)} type="password" placeholder="Minimum 8 caractères" required className="input-field" />
+                <PasswordInput value={form.password} onChange={e => set('password', e.target.value)} placeholder="Minimum 8 caractères" required autoComplete="new-password" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1.5 font-semibold uppercase tracking-wide">Confirmer</label>
-                <input value={form.confirm} onChange={e => set('confirm', e.target.value)} type="password" placeholder="••••••••" required className="input-field" />
+                <PasswordInput value={form.confirm} onChange={e => set('confirm', e.target.value)} placeholder="••••••••" required autoComplete="new-password" />
               </div>
               <button type="submit" disabled={loading} className="w-full btn-primary py-3.5 disabled:opacity-50">
                 {loading ? '⏳ Envoi du code...' : 'Continuer →'}
