@@ -47,13 +47,15 @@ export default function Login() {
         <div className="card p-8">
           {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{error}</div>}
 
-          <GoogleSignInButton onError={setError} />
-
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-slate-500 uppercase tracking-wide">ou</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
+          {/* Google OAuth temporarily disabled in prod (Clerk Production needs custom Google Cloud OAuth credentials, see docs/preprod/GOOGLE_OAUTH_CLERK_FIX.md). Re-enable by uncommenting once configured. */}
+          {false && <GoogleSignInButton onError={setError} />}
+          {false && (
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-xs text-slate-500 uppercase tracking-wide">ou</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+          )}
 
           <form onSubmit={submit} className="space-y-4">
             <div>
