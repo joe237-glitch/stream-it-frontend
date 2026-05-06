@@ -76,11 +76,30 @@ export default function Footer() {
               ))}
             </div>
 
-            {/* Countries */}
+            {/* Countries (image flags via flagcdn.com — render same on Windows/macOS/Android) */}
             <div className="flex gap-1.5 mt-4 flex-wrap">
-              {['🇨🇲 Cameroun', '🇨🇮 Côte d\'Ivoire', '🇧🇫 Burkina Faso', '🇧🇯 Bénin', '🇹🇬 Togo', '🇨🇩 RD Congo', '🇨🇬 Congo', '🇬🇦 Gabon', '🇺🇬 Ouganda'].map(c => (
-                <span key={c} className="text-[10px] bg-white/5 border border-white/10 text-slate-500 px-2 py-0.5 rounded-full">
-                  {c}
+              {[
+                { code: 'cm', name: 'Cameroun' },
+                { code: 'ci', name: "Côte d'Ivoire" },
+                { code: 'bf', name: 'Burkina Faso' },
+                { code: 'bj', name: 'Bénin' },
+                { code: 'tg', name: 'Togo' },
+                { code: 'cd', name: 'RD Congo' },
+                { code: 'cg', name: 'Congo' },
+                { code: 'ga', name: 'Gabon' },
+                { code: 'ug', name: 'Ouganda' },
+              ].map(c => (
+                <span key={c.code} className="inline-flex items-center gap-1 text-[10px] bg-white/5 border border-white/10 text-slate-500 px-2 py-0.5 rounded-full">
+                  <img
+                    src={`https://flagcdn.com/16x12/${c.code}.png`}
+                    srcSet={`https://flagcdn.com/32x24/${c.code}.png 2x`}
+                    width="16"
+                    height="12"
+                    alt=""
+                    loading="lazy"
+                    className="rounded-sm"
+                  />
+                  {c.name}
                 </span>
               ))}
             </div>
