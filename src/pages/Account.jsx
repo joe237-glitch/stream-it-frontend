@@ -459,14 +459,32 @@ export default function Account() {
                 className="flex-shrink-0"
               />
               <div>
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-slate-300 transition-colors">
-                  📸 Changer la photo
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                </label>
-                {newPhotoPreview && (
-                  <button onClick={() => { setNewPhoto(null); setNewPhotoPreview(null) }} className="ml-2 text-xs text-red-400 hover:text-red-300">Annuler</button>
+                {import.meta.env.VITE_PROFILE_PHOTO_UPLOAD === 'true' ? (
+                  <>
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-slate-300 transition-colors">
+                      📸 Changer la photo
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                    </label>
+                    {newPhotoPreview && (
+                      <button onClick={() => { setNewPhoto(null); setNewPhotoPreview(null) }} className="ml-2 text-xs text-red-400 hover:text-red-300">Annuler</button>
+                    )}
+                    <p className="text-xs text-slate-600 mt-1.5">JPG, PNG, WebP — max 5 Mo</p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled
+                      title="Disponible bientôt — pour l'instant vos initiales sont affichées"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-500 cursor-not-allowed opacity-60"
+                    >
+                      📸 Changer la photo
+                    </button>
+                    <p className="text-xs text-slate-600 mt-1.5">
+                      Disponible bientôt — vos initiales sont utilisées pour l'instant.
+                    </p>
+                  </>
                 )}
-                <p className="text-xs text-slate-600 mt-1.5">JPG, PNG, WebP — max 5 Mo</p>
               </div>
             </div>
 
