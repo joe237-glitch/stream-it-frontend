@@ -261,7 +261,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
                     >
                       {sellableCountries.map(c => (
                         <option key={c.country_code} value={c.country_code}>
-                          {c.flag_emoji} {c.country_name} ({c.currency})
+                          {c.country_name} ({c.currency})
                         </option>
                       ))}
                     </select>
