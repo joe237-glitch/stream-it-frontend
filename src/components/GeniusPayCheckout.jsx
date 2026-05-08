@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { Payments, Wallet } from '../api/client'
 import { usePaymentCoverage, getSellableCountries } from '../hooks/usePaymentCoverage'
+import { stripDialCode } from '../utils/phone'
 
 /**
  * GeniusPayCheckout — enriched hosted-checkout flow (Phase 1, 2026-04-29).
@@ -122,10 +123,16 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
     : `${amount.toLocaleString()} ${currency || ''}`.trim()
 
   // ─── Phone validation (best-effort, backend revalidates) ──────
+  // Strip the country dial code (+237, 237, leading 0) before testing the
+  // operator pattern, so the user can type any of:
+  //   "655521445", "+237655521445", "237655521445", "0655521445"
+  // and validation still passes for Cameroun's pattern `^6[0-9]{8}$`.
+  // The backend re-formats to E.164 before sending to GeniusPay.
+  const phoneNational = stripDialCode(phone, countryCode)
   const phoneOk = !operator?.phone_required
     || (operator.phone_pattern
-        ? new RegExp(operator.phone_pattern).test(phone)
-        : phone.length >= 6)
+        ? new RegExp(operator.phone_pattern).test(phoneNational)
+        : phoneNational.length >= 6)
 
   // ─── Degraded mode: coverage unreachable, no cache ────────────
   // We render a minimal confirm screen and let the backend's legacy body
