@@ -107,6 +107,41 @@ export default function Account() {
     }
   }, [tab])
 
+  // Re-fetch wallet/transactions whenever the tab becomes visible again. This
+  // is the fallback path for "user finished a payment in the GeniusPay tab,
+  // came back to Stream-It manually" — the polling inside the recharge modal
+  // only runs while the modal is open, so anything that survives a modal
+  // close needs this to catch up the displayed balance.
+  useEffect(() => {
+    const refreshWalletData = () => {
+      Wallet.getBalance()
+        .then(r => setWalletBalance(prev => {
+          const next = parseFloat(r.data.data?.balance) || 0
+          if (prev != null && next > prev) {
+            toast?.(`+${(next - prev).toLocaleString('fr-FR')} XAF reçus`, 'success')
+          }
+          return next
+        }))
+        .catch(() => {})
+      Transactions.mine().then(r => setTxns(r.data.data || [])).catch(() => {})
+      Orders.mine().then(r => setOrders(r.data.data || [])).catch(() => {})
+      Subscriptions.mine().then(r => setSubs(r.data.data || [])).catch(() => {})
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshWalletData()
+    }
+    const onFocus = () => refreshWalletData()
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const saveProfile = async () => {
     try {
       const fd = new FormData()
