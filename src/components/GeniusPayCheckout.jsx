@@ -76,7 +76,11 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
   useEffect(() => {
     if (step !== 'polling' || !pollOrderId) return
 
-    const POLL_INTERVAL = 3000
+    // Aggressive polling: webhook fires within seconds of PawaPay
+    // confirmation, so we want to detect terminal status fast and close the
+    // GeniusPay tab before the user lands on the broken "Retour à l'accueil"
+    // button. 1.5s is the floor before we start hammering the backend.
+    const POLL_INTERVAL = 1500
     const MAX_DURATION = 5 * 60 * 1000  // 5 min
     const startedAt = Date.now()
     let cancelled = false
