@@ -42,6 +42,13 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
   const [step, setStep]               = useState('form')   // form | redirecting | polling | done | failed
   const [pollOrderId, setPollOrderId] = useState(null)
   const [pollSecondsLeft, setPollSecondsLeft] = useState(0)
+  // Reference to the GeniusPay checkout tab so we can close it ourselves
+  // when polling reaches a terminal status. Avoids forcing the user to
+  // click GeniusPay's broken "Retour à l'accueil" button (which redirects
+  // to pay.genius.ci instead of honoring our success_url/error_url).
+  // useState holding a ref-like object — not a React ref because we need
+  // to capture the window from inside an async submit handler.
+  const [checkoutTab, setCheckoutTab] = useState(null)
   const [rechargeAmt, setRechargeAmt] = useState('')
   const [countryCode, setCountryCode] = useState(null)
   const [paymentType, setPaymentType] = useState(null)     // 'mobile_money' | 'card'
@@ -74,6 +81,20 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
     const startedAt = Date.now()
     let cancelled = false
 
+    // Closes the GeniusPay tab + brings focus back to Stream-It once the
+    // payment reaches a terminal status. Same-origin restrictions DO apply
+    // to .close() ONLY for windows the script didn't open — since we opened
+    // this one with window.open, .close() works cross-origin. If the user
+    // already closed it manually, .closed is true and .close() is a no-op.
+    const closeCheckoutTab = () => {
+      try {
+        if (checkoutTab && !checkoutTab.closed) {
+          checkoutTab.close()
+        }
+      } catch { /* cross-origin guards */ }
+      try { window.focus() } catch { /* ignore */ }
+    }
+
     const tick = async () => {
       if (cancelled) return
       const elapsed = Date.now() - startedAt
@@ -81,6 +102,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
       if (elapsed >= MAX_DURATION) {
         if (!cancelled) {
+          closeCheckoutTab()
           setStep('failed')
           setError('Délai dépassé. Si vous avez payé, votre solde sera mis à jour automatiquement à votre prochaine connexion.')
         }
@@ -92,6 +114,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
         const s = r.data?.data?.status
         if (cancelled) return
         if (s === 'success') {
+          closeCheckoutTab()
           setStep('done')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
           toast?.('Paiement reçu !', 'success')
@@ -100,6 +123,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
           return
         }
         if (s === 'failed' || s === 'cancelled' || s === 'expired') {
+          closeCheckoutTab()
           setStep('failed')
           setError(s === 'cancelled' ? 'Paiement annulé.' : 'Paiement échoué. Vous pouvez réessayer.')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
@@ -113,7 +137,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
     tick()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, pollOrderId])
+  }, [step, pollOrderId, checkoutTab])
 
   // ─── Selection state derived from coverage ────────────────────
   const sellableCountries = useMemo(() => getSellableCountries(coverage), [coverage])
@@ -235,10 +259,18 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
       // alive and can poll for the payment status. GeniusPay's success page
       // has a "Retour à l'accueil" button that points to pay.genius.ci (their
       // domain), so we cannot rely on a server-side redirect to bring the
-      // user back. Polling lets us auto-confirm the payment without the user
-      // having to navigate back manually.
+      // user back. Polling lets us auto-confirm the payment, and once a
+      // terminal status is reached we call newTab.close() ourselves so the
+      // user never has to interact with GeniusPay's broken return button.
+      //
+      // NB: we deliberately omit `noopener` here — that flag forces the
+      // browser to return null from window.open, which would prevent us from
+      // closing the tab programmatically. The trade-off is that the opened
+      // page can read window.opener; since checkout_url points to GeniusPay
+      // (a trusted payment partner) this is acceptable. We keep `noreferrer`
+      // to avoid leaking the Stream-It URL via the Referer header.
       const newTab = typeof window !== 'undefined'
-        ? window.open(checkout_url, '_blank', 'noopener,noreferrer')
+        ? window.open(checkout_url, '_blank', 'noreferrer')
         : null
 
       if (!newTab || newTab.closed) {
@@ -248,7 +280,13 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
         return
       }
 
-      // New tab opened → start polling current tab.
+      // Defensive: severe the opener link from our side too. Setting
+      // newTab.opener = null is harmless if the browser ignores it and
+      // prevents the popup from navigating us via window.opener.location.
+      try { newTab.opener = null } catch { /* cross-origin */ }
+
+      // New tab opened → store its reference and start polling current tab.
+      setCheckoutTab(newTab)
       setPollOrderId(orderId)
       setStep('polling')
       setSubmitting(false)
@@ -513,7 +551,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
               <p className="font-bold text-lg">Échec du paiement</p>
               <p className="text-slate-400 text-sm px-3">{error || 'Une erreur est survenue.'}</p>
               <button
-                onClick={() => { setStep('form'); setError(''); setPollOrderId(null) }}
+                onClick={() => { setStep('form'); setError(''); setPollOrderId(null); setCheckoutTab(null) }}
                 className="btn-primary mt-2 px-6 py-2 text-sm"
               >
                 Réessayer
