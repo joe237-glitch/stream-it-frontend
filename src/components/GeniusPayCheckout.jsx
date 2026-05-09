@@ -4,6 +4,7 @@ import { useToast } from './Toast'
 import { Payments, Wallet } from '../api/client'
 import { usePaymentCoverage, getSellableCountries } from '../hooks/usePaymentCoverage'
 import { stripDialCode } from '../utils/phone'
+import CountrySelect from './CountrySelect'
 
 /**
  * GeniusPayCheckout — enriched hosted-checkout flow (Phase 1, 2026-04-29).
@@ -261,17 +262,11 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
                   {/* Country */}
                   <div>
                     <label className="block text-xs text-slate-500 mb-1.5">Pays</label>
-                    <select
-                      value={countryCode || ''}
-                      onChange={e => setCountryCode(e.target.value)}
-                      className="input-field"
-                    >
-                      {sellableCountries.map(c => (
-                        <option key={c.country_code} value={c.country_code}>
-                          {c.country_name} ({c.currency})
-                        </option>
-                      ))}
-                    </select>
+                    <CountrySelect
+                      value={countryCode}
+                      onChange={setCountryCode}
+                      options={sellableCountries}
+                    />
                   </div>
 
                   {/* Payment type (skip if a single one) */}
