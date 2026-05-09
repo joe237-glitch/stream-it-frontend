@@ -34,12 +34,14 @@ import CountrySelect from './CountrySelect'
  * backend's legacy fallback then takes over (currency='XOF', no operator).
  * This makes the migration robust to a temporary backend coverage outage.
  */
-export default function GeniusPayCheckout({ product, cart, recharge, onClose }) {
+export default function GeniusPayCheckout({ product, cart, recharge, onClose, onSuccess }) {
   const { user } = useAuth()
   const toast = useToast()
   const { data: coverage, loading: coverageLoading, error: coverageError } = usePaymentCoverage()
 
-  const [step, setStep]               = useState('form')   // form | redirecting
+  const [step, setStep]               = useState('form')   // form | redirecting | polling | done | failed
+  const [pollOrderId, setPollOrderId] = useState(null)
+  const [pollSecondsLeft, setPollSecondsLeft] = useState(0)
   const [rechargeAmt, setRechargeAmt] = useState('')
   const [countryCode, setCountryCode] = useState(null)
   const [paymentType, setPaymentType] = useState(null)     // 'mobile_money' | 'card'
@@ -60,6 +62,58 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
     }
     return () => { document.body.style.overflow = '' }
   }, [])
+
+  // ─── Polling: when GeniusPay checkout is open in a new tab, this tab
+  //     polls the backend every 3s for up to 5 min until status is final.
+  //     Triggered by setStep('polling') after successful new-tab open.
+  useEffect(() => {
+    if (step !== 'polling' || !pollOrderId) return
+
+    const POLL_INTERVAL = 3000
+    const MAX_DURATION = 5 * 60 * 1000  // 5 min
+    const startedAt = Date.now()
+    let cancelled = false
+
+    const tick = async () => {
+      if (cancelled) return
+      const elapsed = Date.now() - startedAt
+      setPollSecondsLeft(Math.max(0, Math.ceil((MAX_DURATION - elapsed) / 1000)))
+
+      if (elapsed >= MAX_DURATION) {
+        if (!cancelled) {
+          setStep('failed')
+          setError('Délai dépassé. Si vous avez payé, votre solde sera mis à jour automatiquement à votre prochaine connexion.')
+        }
+        return
+      }
+
+      try {
+        const r = await Payments.status(pollOrderId)
+        const s = r.data?.data?.status
+        if (cancelled) return
+        if (s === 'success') {
+          setStep('done')
+          try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          toast?.('Paiement reçu !', 'success')
+          if (typeof onSuccess === 'function') onSuccess()
+          setTimeout(() => onClose?.(), 1800)
+          return
+        }
+        if (s === 'failed' || s === 'cancelled' || s === 'expired') {
+          setStep('failed')
+          setError(s === 'cancelled' ? 'Paiement annulé.' : 'Paiement échoué. Vous pouvez réessayer.')
+          try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          return
+        }
+      } catch {
+        // network blip — keep polling
+      }
+      setTimeout(tick, POLL_INTERVAL)
+    }
+    tick()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, pollOrderId])
 
   // ─── Selection state derived from coverage ────────────────────
   const sellableCountries = useMemo(() => getSellableCountries(coverage), [coverage])
@@ -176,8 +230,28 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
       }
 
       try { sessionStorage.setItem('sit_pending_payment', JSON.stringify({ orderId, ts: Date.now() })) } catch { /* ignore */ }
-      setStep('redirecting')
-      window.location.href = checkout_url
+
+      // Open the GeniusPay checkout in a new tab so this Stream-It page stays
+      // alive and can poll for the payment status. GeniusPay's success page
+      // has a "Retour à l'accueil" button that points to pay.genius.ci (their
+      // domain), so we cannot rely on a server-side redirect to bring the
+      // user back. Polling lets us auto-confirm the payment without the user
+      // having to navigate back manually.
+      const newTab = typeof window !== 'undefined'
+        ? window.open(checkout_url, '_blank', 'noopener,noreferrer')
+        : null
+
+      if (!newTab || newTab.closed) {
+        // Popup blocked → fallback to current-tab redirect (legacy behaviour)
+        setStep('redirecting')
+        window.location.href = checkout_url
+        return
+      }
+
+      // New tab opened → start polling current tab.
+      setPollOrderId(orderId)
+      setStep('polling')
+      setSubmitting(false)
     } catch (err) {
       const code = err.response?.data?.error?.code
       const message = err.response?.data?.message || 'Erreur lors de la création du paiement'
@@ -398,6 +472,52 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose }) 
                 <p className="font-bold text-lg">Redirection en cours…</p>
                 <p className="text-slate-500 text-sm mt-1">Vous allez être conduit vers la page de paiement sécurisée.</p>
               </div>
+            </div>
+          )}
+
+          {step === 'polling' && (
+            <div className="text-center py-8 space-y-4">
+              <div className="w-16 h-16 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin mx-auto" />
+              <div>
+                <p className="font-bold text-lg">Paiement en cours…</p>
+                <p className="text-slate-400 text-sm mt-2 px-2">
+                  Une nouvelle fenêtre s'est ouverte pour finaliser votre paiement Mobile Money.
+                </p>
+                <p className="text-slate-500 text-xs mt-3">
+                  Cette page se mettra à jour automatiquement dès la confirmation. Vous pouvez fermer la fenêtre GeniusPay une fois le paiement validé sur votre téléphone.
+                </p>
+                {pollSecondsLeft > 0 && (
+                  <p className="text-slate-600 text-xs mt-3">
+                    Délai max : {Math.floor(pollSecondsLeft / 60)}m {String(pollSecondsLeft % 60).padStart(2, '0')}s
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {step === 'done' && (
+            <div className="text-center py-8 space-y-3">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto">
+                <span className="text-3xl">✓</span>
+              </div>
+              <p className="font-bold text-lg">Paiement reçu !</p>
+              <p className="text-slate-500 text-sm">Votre solde a été mis à jour.</p>
+            </div>
+          )}
+
+          {step === 'failed' && (
+            <div className="text-center py-8 space-y-3">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+                <span className="text-3xl">✕</span>
+              </div>
+              <p className="font-bold text-lg">Échec du paiement</p>
+              <p className="text-slate-400 text-sm px-3">{error || 'Une erreur est survenue.'}</p>
+              <button
+                onClick={() => { setStep('form'); setError(''); setPollOrderId(null) }}
+                className="btn-primary mt-2 px-6 py-2 text-sm"
+              >
+                Réessayer
+              </button>
             </div>
           )}
         </div>
