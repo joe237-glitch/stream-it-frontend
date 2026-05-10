@@ -99,10 +99,23 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
       try { window.focus() } catch { /* ignore */ }
     }
 
+    // Track when the GeniusPay tab gets closed (either by us, the user, or
+    // by GeniusPay itself bombing with a 419/CSRF expired). We give the
+    // backend a grace window after the close to receive the webhook before
+    // declaring the payment failed — the user might have paid right before
+    // closing.
+    let tabClosedAt = null
+    const TAB_CLOSED_GRACE_MS = 30 * 1000  // 30s after close
+
     const tick = async () => {
       if (cancelled) return
       const elapsed = Date.now() - startedAt
       setPollSecondsLeft(Math.max(0, Math.ceil((MAX_DURATION - elapsed) / 1000)))
+
+      // Detect tab closure (manual close, browser kill, GeniusPay 419, etc.)
+      if (checkoutTab && checkoutTab.closed && !tabClosedAt) {
+        tabClosedAt = Date.now()
+      }
 
       if (elapsed >= MAX_DURATION) {
         if (!cancelled) {
@@ -130,6 +143,15 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
           closeCheckoutTab()
           setStep('failed')
           setError(s === 'cancelled' ? 'Paiement annulé.' : 'Paiement échoué. Vous pouvez réessayer.')
+          try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          return
+        }
+        // If the tab closed without a terminal status AND the grace window
+        // elapsed without webhook, surface a clear retry path. Common cause:
+        // GeniusPay's checkout returned 419 PAGE EXPIRED on form submit.
+        if (tabClosedAt && Date.now() - tabClosedAt > TAB_CLOSED_GRACE_MS) {
+          setStep('failed')
+          setError('La page de paiement a été fermée avant la confirmation. Cela peut arriver si la session GeniusPay expire (erreur 419). Cliquez sur Réessayer pour générer une nouvelle page.')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
           return
         }
