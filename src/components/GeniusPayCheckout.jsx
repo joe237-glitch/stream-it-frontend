@@ -39,15 +39,15 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
   const toast = useToast()
   const { data: coverage, loading: coverageLoading, error: coverageError } = usePaymentCoverage()
 
-  const [step, setStep]               = useState('form')   // form | redirecting | polling | done | failed
+  const [step, setStep]               = useState('form')   // form | redirecting | polling | timeout | done | failed
   const [pollOrderId, setPollOrderId] = useState(null)
   const [pollSecondsLeft, setPollSecondsLeft] = useState(0)
-  // Reference to the GeniusPay checkout tab so we can close it ourselves
-  // when polling reaches a terminal status. Avoids forcing the user to
-  // click GeniusPay's broken "Retour à l'accueil" button (which redirects
-  // to pay.genius.ci instead of honoring our success_url/error_url).
-  // useState holding a ref-like object — not a React ref because we need
-  // to capture the window from inside an async submit handler.
+  const [manualChecking, setManualChecking] = useState(false)
+  // Reference to the GeniusPay checkout tab. Used ONLY for a best-effort
+  // .close() on success — the browser may refuse to close cross-origin
+  // popups, so the UX never depends on this. Stream-It is the source of
+  // truth: as soon as the webhook lands and polling sees status=success,
+  // we transition to the done screen regardless of the GeniusPay tab.
   const [checkoutTab, setCheckoutTab] = useState(null)
   const [rechargeAmt, setRechargeAmt] = useState('')
   const [countryCode, setCountryCode] = useState(null)
@@ -76,52 +76,35 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
   useEffect(() => {
     if (step !== 'polling' || !pollOrderId) return
 
-    // Aggressive polling: webhook fires within seconds of PawaPay
-    // confirmation, so we want to detect terminal status fast and close the
-    // GeniusPay tab before the user lands on the broken "Retour à l'accueil"
-    // button. 1.5s is the floor before we start hammering the backend.
-    const POLL_INTERVAL = 1500
+    // 4s polling — light enough on the backend, fast enough that the
+    // success screen appears within a few seconds of the webhook. We do NOT
+    // race the GeniusPay tab close anymore; the directive is that Stream-It
+    // is the source of truth, regardless of what happens on pay.genius.ci.
+    const POLL_INTERVAL = 4000
     const MAX_DURATION = 5 * 60 * 1000  // 5 min
     const startedAt = Date.now()
     let cancelled = false
 
-    // Closes the GeniusPay tab + brings focus back to Stream-It once the
-    // payment reaches a terminal status. Same-origin restrictions DO apply
-    // to .close() ONLY for windows the script didn't open — since we opened
-    // this one with window.open, .close() works cross-origin. If the user
-    // already closed it manually, .closed is true and .close() is a no-op.
+    // Best-effort: try to close the GeniusPay tab on terminal status. The
+    // browser may ignore this for cross-origin popups — that's fine, the UX
+    // doesn't depend on it. We always show the user "vous pouvez fermer
+    // l'onglet GeniusPay s'il est encore ouvert" so they know what to do.
     const closeCheckoutTab = () => {
-      try {
-        if (checkoutTab && !checkoutTab.closed) {
-          checkoutTab.close()
-        }
-      } catch { /* cross-origin guards */ }
+      try { checkoutTab?.close?.() } catch { /* best-effort */ }
       try { window.focus() } catch { /* ignore */ }
     }
-
-    // Track when the GeniusPay tab gets closed (either by us, the user, or
-    // by GeniusPay itself bombing with a 419/CSRF expired). We give the
-    // backend a grace window after the close to receive the webhook before
-    // declaring the payment failed — the user might have paid right before
-    // closing.
-    let tabClosedAt = null
-    const TAB_CLOSED_GRACE_MS = 30 * 1000  // 30s after close
 
     const tick = async () => {
       if (cancelled) return
       const elapsed = Date.now() - startedAt
       setPollSecondsLeft(Math.max(0, Math.ceil((MAX_DURATION - elapsed) / 1000)))
 
-      // Detect tab closure (manual close, browser kill, GeniusPay 419, etc.)
-      if (checkoutTab && checkoutTab.closed && !tabClosedAt) {
-        tabClosedAt = Date.now()
-      }
-
       if (elapsed >= MAX_DURATION) {
         if (!cancelled) {
-          closeCheckoutTab()
-          setStep('failed')
-          setError('Délai dépassé. Si vous avez payé, votre solde sera mis à jour automatiquement à votre prochaine connexion.')
+          // Soft timeout: don't close the tab, don't claim failure. The
+          // user may still be in the middle of a USSD flow. Surface a
+          // gentle prompt to verify manually or contact support.
+          setStep('timeout')
         }
         return
       }
@@ -131,27 +114,19 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
         const s = r.data?.data?.status
         if (cancelled) return
         if (s === 'success') {
-          closeCheckoutTab()
+          closeCheckoutTab()  // best-effort; UX does not depend on it
           setStep('done')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
-          toast?.('Paiement reçu !', 'success')
+          toast?.('Paiement confirmé', 'success')
           if (typeof onSuccess === 'function') onSuccess()
-          setTimeout(() => onClose?.(), 1800)
           return
         }
         if (s === 'failed' || s === 'cancelled' || s === 'expired') {
-          closeCheckoutTab()
+          // Note: a GeniusPay 419 page does NOT mark the payment as failed
+          // — that decision belongs to the webhook. We only treat the order
+          // as failed when the backend says so explicitly.
           setStep('failed')
           setError(s === 'cancelled' ? 'Paiement annulé.' : 'Paiement échoué. Vous pouvez réessayer.')
-          try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
-          return
-        }
-        // If the tab closed without a terminal status AND the grace window
-        // elapsed without webhook, surface a clear retry path. Common cause:
-        // GeniusPay's checkout returned 419 PAGE EXPIRED on form submit.
-        if (tabClosedAt && Date.now() - tabClosedAt > TAB_CLOSED_GRACE_MS) {
-          setStep('failed')
-          setError('La page de paiement a été fermée avant la confirmation. Cela peut arriver si la session GeniusPay expire (erreur 419). Cliquez sur Réessayer pour générer une nouvelle page.')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
           return
         }
@@ -322,6 +297,38 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
       const message = err.response?.data?.message || 'Erreur lors de la création du paiement'
       setError(code ? `${message}` : message)
       setSubmitting(false)
+    }
+  }
+
+  // Manual "I paid, check now" — fires a single status fetch and
+  // transitions to done/failed if backend has resolved. Otherwise stays
+  // in the current step. Used from the polling and timeout screens.
+  const checkNow = async () => {
+    if (!pollOrderId || manualChecking) return
+    setManualChecking(true)
+    try {
+      const r = await Payments.status(pollOrderId)
+      const s = r.data?.data?.status
+      if (s === 'success') {
+        try { checkoutTab?.close?.() } catch { /* best-effort */ }
+        setStep('done')
+        try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        toast?.('Paiement confirmé', 'success')
+        if (typeof onSuccess === 'function') onSuccess()
+        return
+      }
+      if (s === 'failed' || s === 'cancelled' || s === 'expired') {
+        setStep('failed')
+        setError(s === 'cancelled' ? 'Paiement annulé.' : 'Paiement échoué. Vous pouvez réessayer.')
+        try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        return
+      }
+      // Still pending — surface a soft toast so the user knows we checked.
+      toast?.('Paiement encore en attente, validez sur GeniusPay puis réessayez.', 'info')
+    } catch {
+      toast?.('Vérification impossible, réessayez dans quelques secondes.', 'error')
+    } finally {
+      setManualChecking(false)
     }
   }
 
@@ -541,32 +548,110 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
           )}
 
           {step === 'polling' && (
-            <div className="text-center py-8 space-y-4">
+            <div className="text-center py-6 space-y-5">
               <div className="w-16 h-16 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin mx-auto" />
-              <div>
-                <p className="font-bold text-lg">Paiement en cours…</p>
-                <p className="text-slate-400 text-sm mt-2 px-2">
-                  Une nouvelle fenêtre s'est ouverte pour finaliser votre paiement Mobile Money.
+              <div className="space-y-2">
+                <p className="font-bold text-lg">Paiement en cours</p>
+                <p className="text-slate-300 text-sm px-2 leading-relaxed">
+                  Validez le paiement dans l'onglet GeniusPay, puis revenez ici.
                 </p>
-                <p className="text-slate-500 text-xs mt-3">
-                  Cette page se mettra à jour automatiquement dès la confirmation. Vous pouvez fermer la fenêtre GeniusPay une fois le paiement validé sur votre téléphone.
+                <p className="text-slate-500 text-xs px-2 leading-relaxed">
+                  Stream-It détectera automatiquement votre paiement.
                 </p>
-                {pollSecondsLeft > 0 && (
-                  <p className="text-slate-600 text-xs mt-3">
-                    Délai max : {Math.floor(pollSecondsLeft / 60)}m {String(pollSecondsLeft % 60).padStart(2, '0')}s
-                  </p>
-                )}
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={checkNow}
+                  disabled={manualChecking}
+                  className="w-full py-3 text-sm font-semibold rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 disabled:opacity-50 transition-colors"
+                >
+                  {manualChecking ? 'Vérification…' : "J'ai payé, vérifier maintenant"}
+                </button>
+                <a
+                  href="https://wa.me/237655521445?text=Bonjour%2C%20j%27ai%20un%20probl%C3%A8me%20avec%20mon%20paiement%20Stream-It"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-2.5 text-xs font-medium rounded-2xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors"
+                >
+                  Besoin d'aide ? Contacter le support
+                </a>
+              </div>
+
+              {pollSecondsLeft > 0 && (
+                <p className="text-slate-600 text-xs">
+                  Vérification automatique pendant encore {Math.floor(pollSecondsLeft / 60)}m {String(pollSecondsLeft % 60).padStart(2, '0')}s
+                </p>
+              )}
+            </div>
+          )}
+
+          {step === 'timeout' && (
+            <div className="text-center py-6 space-y-5">
+              <div className="w-16 h-16 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto">
+                <span className="text-3xl">⏱</span>
+              </div>
+              <div className="space-y-2">
+                <p className="font-bold text-lg">Paiement en attente</p>
+                <p className="text-slate-300 text-sm px-2 leading-relaxed">
+                  Si vous avez déjà validé le paiement, cliquez sur « Vérifier maintenant ».
+                </p>
+                <p className="text-slate-500 text-xs px-2 leading-relaxed">
+                  Si le montant a été débité mais la commande n'est pas confirmée, contactez le support.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={checkNow}
+                  disabled={manualChecking}
+                  className="w-full py-3 text-sm font-semibold rounded-2xl btn-primary disabled:opacity-50"
+                >
+                  {manualChecking ? 'Vérification…' : 'Vérifier maintenant'}
+                </button>
+                <a
+                  href="https://wa.me/237655521445?text=Bonjour%2C%20j%27ai%20pay%C3%A9%20mais%20ma%20commande%20Stream-It%20n%27est%20pas%20confirm%C3%A9e"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-2.5 text-xs font-medium rounded-2xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors"
+                >
+                  Contacter le support
+                </a>
+                <button
+                  onClick={() => { setStep('form'); setError(''); setPollOrderId(null); setCheckoutTab(null) }}
+                  className="block w-full py-2.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  Recommencer un nouveau paiement
+                </button>
               </div>
             </div>
           )}
 
           {step === 'done' && (
-            <div className="text-center py-8 space-y-3">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto">
+            <div className="text-center py-6 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto">
                 <span className="text-3xl">✓</span>
               </div>
-              <p className="font-bold text-lg">Paiement reçu !</p>
-              <p className="text-slate-500 text-sm">Votre solde a été mis à jour.</p>
+              <div className="space-y-2">
+                <p className="font-bold text-lg">Paiement confirmé</p>
+                <p className="text-slate-300 text-sm px-2">
+                  {recharge
+                    ? 'Votre solde a été mis à jour.'
+                    : 'Votre commande a été enregistrée.'}
+                </p>
+                <p className="text-slate-500 text-xs px-2 leading-relaxed pt-1">
+                  Vous pouvez fermer l'onglet GeniusPay s'il est encore ouvert.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={() => onClose?.()}
+                  className="w-full py-3 text-sm font-semibold rounded-2xl btn-primary"
+                >
+                  {recharge ? 'Voir mon solde' : 'Voir ma commande'}
+                </button>
+              </div>
             </div>
           )}
 
