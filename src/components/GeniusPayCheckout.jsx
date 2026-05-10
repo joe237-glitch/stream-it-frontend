@@ -289,14 +289,15 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
       // terminal status is reached we call newTab.close() ourselves so the
       // user never has to interact with GeniusPay's broken return button.
       //
-      // NB: we deliberately omit `noopener` here — that flag forces the
-      // browser to return null from window.open, which would prevent us from
-      // closing the tab programmatically. The trade-off is that the opened
-      // page can read window.opener; since checkout_url points to GeniusPay
-      // (a trusted payment partner) this is acceptable. We keep `noreferrer`
-      // to avoid leaking the Stream-It URL via the Referer header.
+      // NB: we pass NO features string at all. Per the HTML spec, both
+      // `noopener` AND `noreferrer` make window.open return null, which
+      // would prevent us from closing the tab programmatically. We accept
+      // the small leak (Referer header + window.opener access) because
+      // checkout_url points to GeniusPay — a trusted payment partner — and
+      // we null `newTab.opener` defensively right after open. The receiver
+      // is also same-host as our payment session, so leakage is bounded.
       const newTab = typeof window !== 'undefined'
-        ? window.open(checkout_url, '_blank', 'noreferrer')
+        ? window.open(checkout_url, '_blank')
         : null
 
       if (!newTab || newTab.closed) {
