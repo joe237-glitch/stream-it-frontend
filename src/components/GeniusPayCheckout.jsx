@@ -188,6 +188,16 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
       try { sessionStorage.setItem('sit_pending_payment', JSON.stringify({ orderId, ts: Date.now() })) } catch { /* ignore */ }
 
+      // Tag the flow so /payment/return knows whether to clear the cart on
+      // success. Three distinct flows go through this same page:
+      //   - 'cart'            → checkout of the cart, clearCart() on success
+      //   - 'buy_now'         → direct product purchase, cart must NOT be touched
+      //   - 'wallet_recharge' → wallet top-up, cart must NOT be touched
+      // Defaulting to no clear is the safe choice — a missing tag means
+      // PaymentReturn leaves the cart alone.
+      const paymentFlow = recharge ? 'wallet_recharge' : (cart ? 'cart' : 'buy_now')
+      try { sessionStorage.setItem('sit_payment_flow', paymentFlow) } catch { /* ignore */ }
+
       // ─── Pattern "deux onglets" ──────────────────────────────────────
       // GeniusPay's hosted checkout keeps the user on pay.genius.ci even
       // after a successful payment — their "Retour à l'accueil" button

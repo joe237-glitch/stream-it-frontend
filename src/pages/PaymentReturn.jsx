@@ -53,6 +53,9 @@ export default function PaymentReturn() {
     if (!orderId) {
       setState('failed')
       setError('Référence de commande manquante')
+      // No flow can resume — drop both keys so a retry starts clean.
+      try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+      try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
       return
     }
 
@@ -84,12 +87,17 @@ export default function PaymentReturn() {
         if (status === 'success') {
           stopRef.current = true
           setState('success')
+          // Conditional cart clear: this page handles three flows (cart,
+          // buy_now, wallet_recharge). Only the 'cart' flow should empty
+          // the basket. The tag is set by GeniusPayCheckout before nav.
+          // Missing / unknown tag → leave the cart untouched (safe default).
+          let flow = null
+          try { flow = sessionStorage.getItem('sit_payment_flow') } catch { /* ignore */ }
+          if (flow === 'cart') {
+            try { clearCart?.() } catch { /* defensive */ }
+          }
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
-          // Empty the cart ONLY when the backend confirms success — the
-          // CartDrawer's onSuccess hook only fires for wallet checkouts,
-          // and the cart context survives the navigation to this page,
-          // so without an explicit clear the items reappear on reload.
-          try { clearCart?.() } catch { /* defensive */ }
+          try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
           toast?.('Paiement confirmé', 'success')
           // Refresh wallet balance silently (best-effort)
           Wallet.getBalance().catch(() => {})
@@ -101,6 +109,9 @@ export default function PaymentReturn() {
           setState('failed')
           setError(`Paiement ${status}`)
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          // Drop the flow tag on terminal failure too so a retry doesn't
+          // inherit a stale value from the previous attempt.
+          try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
           return
         }
 
@@ -138,14 +149,23 @@ export default function PaymentReturn() {
       if (status === 'success') {
         stopRef.current = true
         setState('success')
+        // Same conditional-clear logic as tick() — only the 'cart' flow
+        // empties the basket. See sit_payment_flow handling above.
+        let flow = null
+        try { flow = sessionStorage.getItem('sit_payment_flow') } catch { /* ignore */ }
+        if (flow === 'cart') {
+          try { clearCart?.() } catch { /* defensive */ }
+        }
         try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
-        try { clearCart?.() } catch { /* defensive */ }
+        try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
         toast?.('Paiement confirmé', 'success')
         Wallet.getBalance().catch(() => {})
       } else if (status === 'failed' || status === 'expired' || status === 'cancelled') {
         stopRef.current = true
         setState('failed')
         setError(`Paiement ${status}`)
+        try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
       } else {
         toast?.('Paiement encore en attente — revenez dans quelques secondes.', 'info')
       }
