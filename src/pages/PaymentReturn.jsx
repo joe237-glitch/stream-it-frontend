@@ -61,6 +61,12 @@ export default function PaymentReturn() {
 
       try {
         const res = await Payments.recheck(orderId)
+        // CRITICAL: re-check stopRef after the await. If checkNow() (manual
+        // verify) raced ahead and already set state=success while we were
+        // waiting on the network, this stale tick must NOT overwrite the
+        // terminal state with pending_confirmation. Same guard for unmount
+        // (StrictMode double-mount, navigation, etc.).
+        if (stopRef.current) return
         const status = res.data.data?.status
 
         if (status === 'success') {
@@ -107,6 +113,10 @@ export default function PaymentReturn() {
     if (!orderId || stopRef.current) return
     try {
       const res = await Payments.recheck(orderId)
+      // Same race guard as tick(): if a parallel poll (or another click)
+      // resolved the order while we were awaiting the network, do not
+      // overwrite the terminal state.
+      if (stopRef.current) return
       const status = res.data.data?.status
       if (status === 'success') {
         stopRef.current = true
@@ -122,6 +132,7 @@ export default function PaymentReturn() {
         toast?.('Paiement encore en attente — revenez dans quelques secondes.', 'info')
       }
     } catch {
+      if (stopRef.current) return
       toast?.('Vérification impossible, réessayez.', 'error')
     }
   }
