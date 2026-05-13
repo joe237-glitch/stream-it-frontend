@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { Payments, Wallet } from '../api/client'
@@ -37,6 +38,7 @@ import CountrySelect from './CountrySelect'
 export default function GeniusPayCheckout({ product, cart, recharge, onClose, onSuccess }) {
   const { user } = useAuth()
   const toast = useToast()
+  const navigate = useNavigate()
   const { data: coverage, loading: coverageLoading, error: coverageError } = usePaymentCoverage()
 
   const [step, setStep]               = useState('form')   // form | redirecting | polling | timeout | done | failed
@@ -256,42 +258,44 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
       try { sessionStorage.setItem('sit_pending_payment', JSON.stringify({ orderId, ts: Date.now() })) } catch { /* ignore */ }
 
-      // Open the GeniusPay checkout in a new tab so this Stream-It page stays
-      // alive and can poll for the payment status. GeniusPay's success page
-      // has a "Retour à l'accueil" button that points to pay.genius.ci (their
-      // domain), so we cannot rely on a server-side redirect to bring the
-      // user back. Polling lets us auto-confirm the payment, and once a
-      // terminal status is reached we call newTab.close() ourselves so the
-      // user never has to interact with GeniusPay's broken return button.
+      // ─── Pattern "deux onglets" ──────────────────────────────────────
+      // GeniusPay's hosted checkout keeps the user on pay.genius.ci even
+      // after a successful payment — their "Retour à l'accueil" button
+      // is hardcoded to their homepage and ignores our success_url. So
+      // instead of sending the user there and praying for a redirect, we
+      // split the flow into two tabs:
+      //   1. New tab → GeniusPay checkout (USSD push, Mobile Money flow)
+      //   2. Current tab → Stream-It's /payment/return page, which polls
+      //      our backend every few seconds until the webhook lands.
       //
-      // NB: we pass NO features string at all. Per the HTML spec, both
-      // `noopener` AND `noreferrer` make window.open return null, which
-      // would prevent us from closing the tab programmatically. We accept
-      // the small leak (Referer header + window.opener access) because
-      // checkout_url points to GeniusPay — a trusted payment partner — and
-      // we null `newTab.opener` defensively right after open. The receiver
-      // is also same-host as our payment session, so leakage is bounded.
-      const newTab = typeof window !== 'undefined'
+      // The user always keeps one foot on stream-it.shop. They can close
+      // the GeniusPay tab whenever; the confirmation page lives on our
+      // domain regardless. The webhook is the source of truth — the
+      // /payment/return page only reads status, never modifies it.
+      //
+      // NB: no features string. Both `noopener` and `noreferrer` make
+      // window.open return null per the HTML spec.
+      const paymentTab = typeof window !== 'undefined'
         ? window.open(checkout_url, '_blank')
         : null
 
-      if (!newTab || newTab.closed) {
-        // Popup blocked → fallback to current-tab redirect (legacy behaviour)
+      if (!paymentTab || paymentTab.closed) {
+        // Popup blocked (strict browser) → fallback to legacy same-tab
+        // redirect. The user will still hit GeniusPay's broken return
+        // button, but at least the payment goes through.
         setStep('redirecting')
         window.location.href = checkout_url
         return
       }
 
-      // Defensive: severe the opener link from our side too. Setting
-      // newTab.opener = null is harmless if the browser ignores it and
-      // prevents the popup from navigating us via window.opener.location.
-      try { newTab.opener = null } catch { /* cross-origin */ }
+      // Defensive: cut the opener link so the popup can't navigate us
+      // via window.opener.location (harmless if the browser ignores it).
+      try { paymentTab.opener = null } catch { /* cross-origin */ }
 
-      // New tab opened → store its reference and start polling current tab.
-      setCheckoutTab(newTab)
-      setPollOrderId(orderId)
-      setStep('polling')
-      setSubmitting(false)
+      // Navigate the ORIGINAL tab to our confirmation page. This unmounts
+      // the modal and shows the user a Stream-It-branded "Paiement en
+      // cours…" screen that auto-resolves to success/failed via polling.
+      navigate(`/payment/return?orderId=${orderId}`)
     } catch (err) {
       const code = err.response?.data?.error?.code
       const message = err.response?.data?.message || 'Erreur lors de la création du paiement'
