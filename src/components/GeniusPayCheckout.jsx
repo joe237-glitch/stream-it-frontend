@@ -250,7 +250,11 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
       const res = await Payments.create(payload)
       const { checkout_url, orderId } = res.data?.data || {}
-      if (!checkout_url) {
+      // Both fields are required. Without orderId, the /payment/return
+      // page can't poll (the URL would literally contain "orderId=undefined"
+      // — a truthy string that slips past PaymentReturn's guard and burns
+      // 60 poll cycles in the void). Refuse to navigate if either is missing.
+      if (!checkout_url || !orderId) {
         setError('Réponse provider invalide')
         setSubmitting(false)
         return
