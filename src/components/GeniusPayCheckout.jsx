@@ -345,6 +345,13 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
         : { products: cart.map(i => ({ productId: i.product.id, quantity: i.quantity })) }
       await Wallet.pay(payload)
       toast('Paiement par solde confirmé !', 'success')
+      // Fire onSuccess so the parent can clear the cart and refresh state.
+      // Without this, CartDrawer keeps the items in the cart after a
+      // successful wallet checkout — the user could re-pay for the same
+      // basket. The hosted-checkout flow handles cart-clear via the
+      // /payment/return page (which calls clearCart on success), so this
+      // is specifically the wallet path that needed the explicit hook.
+      if (typeof onSuccess === 'function') onSuccess()
       setTimeout(() => onClose(), 1500)
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur de paiement wallet')
