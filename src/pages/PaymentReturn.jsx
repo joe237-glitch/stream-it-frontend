@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Payments, Wallet } from '../api/client'
 import { useToast } from '../components/Toast'
+import { useCart } from '../context/CartContext'
 
 /**
  * PaymentReturn — Stream-It-side confirmation page for the two-tab pattern.
@@ -28,6 +29,7 @@ export default function PaymentReturn() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { clearCart } = useCart()
   const orderId = params.get('orderId')
 
   const [state, setState] = useState('checking')
@@ -54,6 +56,16 @@ export default function PaymentReturn() {
       return
     }
 
+    // Reset the stop flag on (re)mount. React 18 StrictMode in dev fires
+    // setup → cleanup → setup, and the cleanup sets stopRef.current=true.
+    // Without this reset, the second setup's tick() exits immediately on
+    // its very first check, leaving the spinner stuck at "checking" forever
+    // during local development. Harmless in production (single mount) but
+    // critical for the dev/test loop.
+    stopRef.current = false
+    pollRef.current = 0
+    startedAtRef.current = Date.now()
+
     const tick = async () => {
       if (stopRef.current) return
       pollRef.current += 1
@@ -73,6 +85,11 @@ export default function PaymentReturn() {
           stopRef.current = true
           setState('success')
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          // Empty the cart ONLY when the backend confirms success — the
+          // CartDrawer's onSuccess hook only fires for wallet checkouts,
+          // and the cart context survives the navigation to this page,
+          // so without an explicit clear the items reappear on reload.
+          try { clearCart?.() } catch { /* defensive */ }
           toast?.('Paiement confirmé', 'success')
           // Refresh wallet balance silently (best-effort)
           Wallet.getBalance().catch(() => {})
@@ -122,6 +139,7 @@ export default function PaymentReturn() {
         stopRef.current = true
         setState('success')
         try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        try { clearCart?.() } catch { /* defensive */ }
         toast?.('Paiement confirmé', 'success')
         Wallet.getBalance().catch(() => {})
       } else if (status === 'failed' || status === 'expired' || status === 'cancelled') {
