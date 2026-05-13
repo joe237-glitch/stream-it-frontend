@@ -488,7 +488,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-slate-400 space-y-2">
                 <p className="font-semibold text-slate-200">Paiement sécurisé</p>
-                <p>Vous serez redirigé vers la page sécurisée de GeniusPay pour finaliser le paiement avec votre opérateur.</p>
+                <p>Un nouvel onglet va s'ouvrir pour finaliser le paiement Mobile Money. Revenez ensuite sur Stream-It — votre paiement est détecté automatiquement, pas besoin de cliquer sur "Retour".</p>
               </div>
 
               {error && (

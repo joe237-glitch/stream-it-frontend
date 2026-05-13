@@ -58,7 +58,7 @@ export default function Footer() {
               <li className="flex items-center gap-2">
                 <span>💬</span>
                 <a href="https://wa.me/237655521445" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">
-                  WhatsApp Support
+                  WhatsApp · +237 655 521 445
                 </a>
               </li>
               <li className="flex items-start gap-2">
@@ -76,18 +76,19 @@ export default function Footer() {
               ))}
             </div>
 
-            {/* Countries (image flags via flagcdn.com — render same on Windows/macOS/Android) */}
+            {/* Countries — aligned with the GeniusPay merchant coverage matrix
+                (BJ, CM, CG, CI, GA, SN). Do NOT add countries here without
+                first enabling them on the merchant dashboard, otherwise the
+                footer will advertise destinations the checkout will refuse.
+                Image flags via flagcdn.com (consistent on Windows/macOS/Android). */}
             <div className="flex gap-1.5 mt-4 flex-wrap">
               {[
                 { code: 'cm', name: 'Cameroun' },
                 { code: 'ci', name: "Côte d'Ivoire" },
-                { code: 'bf', name: 'Burkina Faso' },
+                { code: 'sn', name: 'Sénégal' },
                 { code: 'bj', name: 'Bénin' },
-                { code: 'tg', name: 'Togo' },
-                { code: 'cd', name: 'RD Congo' },
                 { code: 'cg', name: 'Congo' },
                 { code: 'ga', name: 'Gabon' },
-                { code: 'ug', name: 'Ouganda' },
               ].map(c => (
                 <span key={c.code} className="inline-flex items-center gap-1 text-[10px] bg-white/5 border border-white/10 text-slate-500 px-2 py-0.5 rounded-full">
                   <img
