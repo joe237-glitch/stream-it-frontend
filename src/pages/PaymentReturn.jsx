@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Payments, Wallet } from '../api/client'
 import { useToast } from '../components/Toast'
+import { useCart } from '../context/CartContext'
 
 /**
  * PaymentReturn — Stream-It-side confirmation page for the two-tab pattern.
@@ -28,6 +29,7 @@ export default function PaymentReturn() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { clearCart } = useCart()
   const orderId = params.get('orderId')
 
   const [state, setState] = useState('checking')
@@ -51,8 +53,21 @@ export default function PaymentReturn() {
     if (!orderId) {
       setState('failed')
       setError('Référence de commande manquante')
+      // No flow can resume — drop both keys so a retry starts clean.
+      try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+      try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
       return
     }
+
+    // Reset the stop flag on (re)mount. React 18 StrictMode in dev fires
+    // setup → cleanup → setup, and the cleanup sets stopRef.current=true.
+    // Without this reset, the second setup's tick() exits immediately on
+    // its very first check, leaving the spinner stuck at "checking" forever
+    // during local development. Harmless in production (single mount) but
+    // critical for the dev/test loop.
+    stopRef.current = false
+    pollRef.current = 0
+    startedAtRef.current = Date.now()
 
     const tick = async () => {
       if (stopRef.current) return
@@ -61,12 +76,28 @@ export default function PaymentReturn() {
 
       try {
         const res = await Payments.recheck(orderId)
+        // CRITICAL: re-check stopRef after the await. If checkNow() (manual
+        // verify) raced ahead and already set state=success while we were
+        // waiting on the network, this stale tick must NOT overwrite the
+        // terminal state with pending_confirmation. Same guard for unmount
+        // (StrictMode double-mount, navigation, etc.).
+        if (stopRef.current) return
         const status = res.data.data?.status
 
         if (status === 'success') {
           stopRef.current = true
           setState('success')
+          // Conditional cart clear: this page handles three flows (cart,
+          // buy_now, wallet_recharge). Only the 'cart' flow should empty
+          // the basket. The tag is set by GeniusPayCheckout before nav.
+          // Missing / unknown tag → leave the cart untouched (safe default).
+          let flow = null
+          try { flow = sessionStorage.getItem('sit_payment_flow') } catch { /* ignore */ }
+          if (flow === 'cart') {
+            try { clearCart?.() } catch { /* defensive */ }
+          }
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
           toast?.('Paiement confirmé', 'success')
           // Refresh wallet balance silently (best-effort)
           Wallet.getBalance().catch(() => {})
@@ -78,6 +109,9 @@ export default function PaymentReturn() {
           setState('failed')
           setError(`Paiement ${status}`)
           try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+          // Drop the flow tag on terminal failure too so a retry doesn't
+          // inherit a stale value from the previous attempt.
+          try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
           return
         }
 
@@ -107,21 +141,36 @@ export default function PaymentReturn() {
     if (!orderId || stopRef.current) return
     try {
       const res = await Payments.recheck(orderId)
+      // Same race guard as tick(): if a parallel poll (or another click)
+      // resolved the order while we were awaiting the network, do not
+      // overwrite the terminal state.
+      if (stopRef.current) return
       const status = res.data.data?.status
       if (status === 'success') {
         stopRef.current = true
         setState('success')
+        // Same conditional-clear logic as tick() — only the 'cart' flow
+        // empties the basket. See sit_payment_flow handling above.
+        let flow = null
+        try { flow = sessionStorage.getItem('sit_payment_flow') } catch { /* ignore */ }
+        if (flow === 'cart') {
+          try { clearCart?.() } catch { /* defensive */ }
+        }
         try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
         toast?.('Paiement confirmé', 'success')
         Wallet.getBalance().catch(() => {})
       } else if (status === 'failed' || status === 'expired' || status === 'cancelled') {
         stopRef.current = true
         setState('failed')
         setError(`Paiement ${status}`)
+        try { sessionStorage.removeItem('sit_pending_payment') } catch { /* ignore */ }
+        try { sessionStorage.removeItem('sit_payment_flow') } catch { /* ignore */ }
       } else {
         toast?.('Paiement encore en attente — revenez dans quelques secondes.', 'info')
       }
     } catch {
+      if (stopRef.current) return
       toast?.('Vérification impossible, réessayez.', 'error')
     }
   }
