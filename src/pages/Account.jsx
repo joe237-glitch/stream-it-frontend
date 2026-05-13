@@ -107,6 +107,41 @@ export default function Account() {
     }
   }, [tab])
 
+  // Re-fetch wallet/transactions whenever the tab becomes visible again. This
+  // is the fallback path for "user finished a payment in the GeniusPay tab,
+  // came back to Stream-It manually" — the polling inside the recharge modal
+  // only runs while the modal is open, so anything that survives a modal
+  // close needs this to catch up the displayed balance.
+  useEffect(() => {
+    const refreshWalletData = () => {
+      Wallet.getBalance()
+        .then(r => setWalletBalance(prev => {
+          const next = parseFloat(r.data.data?.balance) || 0
+          if (prev != null && next > prev) {
+            toast?.(`+${(next - prev).toLocaleString('fr-FR')} XAF reçus`, 'success')
+          }
+          return next
+        }))
+        .catch(() => {})
+      Transactions.mine().then(r => setTxns(r.data.data || [])).catch(() => {})
+      Orders.mine().then(r => setOrders(r.data.data || [])).catch(() => {})
+      Subscriptions.mine().then(r => setSubs(r.data.data || [])).catch(() => {})
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshWalletData()
+    }
+    const onFocus = () => refreshWalletData()
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const saveProfile = async () => {
     try {
       const fd = new FormData()
@@ -459,14 +494,32 @@ export default function Account() {
                 className="flex-shrink-0"
               />
               <div>
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-slate-300 transition-colors">
-                  📸 Changer la photo
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                </label>
-                {newPhotoPreview && (
-                  <button onClick={() => { setNewPhoto(null); setNewPhotoPreview(null) }} className="ml-2 text-xs text-red-400 hover:text-red-300">Annuler</button>
+                {import.meta.env.VITE_PROFILE_PHOTO_UPLOAD === 'true' ? (
+                  <>
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-slate-300 transition-colors">
+                      📸 Changer la photo
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                    </label>
+                    {newPhotoPreview && (
+                      <button onClick={() => { setNewPhoto(null); setNewPhotoPreview(null) }} className="ml-2 text-xs text-red-400 hover:text-red-300">Annuler</button>
+                    )}
+                    <p className="text-xs text-slate-600 mt-1.5">JPG, PNG, WebP — max 5 Mo</p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled
+                      title="Disponible bientôt — pour l'instant vos initiales sont affichées"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-500 cursor-not-allowed opacity-60"
+                    >
+                      📸 Changer la photo
+                    </button>
+                    <p className="text-xs text-slate-600 mt-1.5">
+                      Disponible bientôt — vos initiales sont utilisées pour l'instant.
+                    </p>
+                  </>
                 )}
-                <p className="text-xs text-slate-600 mt-1.5">JPG, PNG, WebP — max 5 Mo</p>
               </div>
             </div>
 

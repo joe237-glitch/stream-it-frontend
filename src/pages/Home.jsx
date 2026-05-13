@@ -85,20 +85,24 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Search + filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="🔍 Rechercher un service..."
-          className="input-field max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)}
-              className={`text-xs font-semibold px-4 py-2 rounded-full border transition-all ${category === c ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}>
-              {c}
-            </button>
-          ))}
+      {/* Search + filters — sticky so the user can refine the catalogue at
+          any scroll position. Header is h-16 so we offset top-16. Tinted
+          backdrop-blur keeps the bar readable when cards scroll behind it. */}
+      <div className="sticky top-16 z-30 -mx-4 px-4 py-3 mb-6 bg-[#0a0a14]/85 backdrop-blur-md border-b border-white/5">
+        <div className="flex flex-col md:flex-row gap-4">
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="🔍 Rechercher un service..."
+            className="input-field max-w-sm"
+          />
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map(c => (
+              <button key={c} onClick={() => setCategory(c)}
+                className={`text-xs font-semibold px-4 py-2 rounded-full border transition-all ${category === c ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

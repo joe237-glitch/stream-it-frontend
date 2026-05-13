@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Payments } from '../api/client'
 
-const CACHE_KEY = 'sit_coverage_v1'
-const ETAG_KEY  = 'sit_coverage_etag'
+// Bump version to invalidate stale localStorage caches (e.g. when only CM
+// was sellable but server now returns 6 countries enabled).
+const CACHE_KEY = 'sit_coverage_v2'
+const ETAG_KEY  = 'sit_coverage_etag_v2'
 
 /**
  * usePaymentCoverage — fetch /api/payments/coverage with localStorage cache + ETag.
