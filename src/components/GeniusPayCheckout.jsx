@@ -175,12 +175,12 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
           }
 
       const res = await Payments.create(payload)
-      const { checkout_url, orderId } = res.data?.data || {}
-      // Both fields are required. Without orderId, the /payment/return
-      // page can't poll (the URL would literally contain "orderId=undefined"
-      // — a truthy string that slips past PaymentReturn's guard and burns
-      // 60 poll cycles in the void). Refuse to navigate if either is missing.
-      if (!checkout_url || !orderId) {
+      const { checkout_url, orderId, mode } = res.data?.data || {}
+      // orderId is always required (the /payment/return page polls on it).
+      // checkout_url is required ONLY for the hosted-checkout (GeniusPay) flow.
+      // PawaPay returns mode:'direct' with NO checkout_url — the customer
+      // approves via a USSD/app push on their phone; there is no redirect.
+      if (!orderId || (mode !== 'direct' && !checkout_url)) {
         setError('Réponse provider invalide')
         setSubmitting(false)
         return
@@ -197,6 +197,16 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
       // PaymentReturn leaves the cart alone.
       const paymentFlow = recharge ? 'wallet_recharge' : (cart ? 'cart' : 'buy_now')
       try { sessionStorage.setItem('sit_payment_flow', paymentFlow) } catch { /* ignore */ }
+
+      // ─── PawaPay direct-charge: no redirect ──────────────────────────
+      // The deposit is already initiated server-side and a USSD/app push has
+      // been sent to the customer's phone. We just navigate to our own
+      // confirmation page, which polls until the payment resolves. No new
+      // tab, no external checkout, no broken return button.
+      if (mode === 'direct') {
+        navigate(`/payment/return?orderId=${orderId}`)
+        return
+      }
 
       // ─── Pattern "deux onglets" ──────────────────────────────────────
       // GeniusPay's hosted checkout keeps the user on pay.genius.ci even
@@ -403,7 +413,7 @@ export default function GeniusPayCheckout({ product, cart, recharge, onClose, on
 
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-slate-400 space-y-2">
                 <p className="font-semibold text-slate-200">Paiement sécurisé</p>
-                <p>Un nouvel onglet va s'ouvrir pour finaliser le paiement Mobile Money. Revenez ensuite sur Stream-It — votre paiement est détecté automatiquement, pas besoin de cliquer sur "Retour".</p>
+                <p>Vous recevrez une demande de confirmation Mobile Money directement sur votre téléphone (notification ou code USSD). Entrez votre code PIN pour valider — le paiement est détecté automatiquement.</p>
               </div>
 
               {error && (

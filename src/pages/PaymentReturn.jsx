@@ -191,11 +191,11 @@ export default function PaymentReturn() {
             <div className="w-16 h-16 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin mx-auto mb-4" />
             <p className="font-bold text-lg">Confirmation en cours</p>
             <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-              Validez le paiement Mobile Money sur l'onglet GeniusPay.
+              Validez le paiement Mobile Money sur votre téléphone (notification ou code USSD de votre opérateur).
               Cette page se mettra à jour automatiquement dès la confirmation.
             </p>
             <p className="text-slate-600 text-xs mt-3 leading-relaxed">
-              Vous pouvez fermer l'onglet GeniusPay une fois le paiement validé sur votre téléphone — votre confirmation reste ici.
+              Entrez votre code PIN Mobile Money quand votre téléphone vous le demande — votre confirmation reste ici.
             </p>
             <div className="mt-5 space-y-2">
               <button
@@ -261,9 +261,6 @@ export default function PaymentReturn() {
             </div>
             <p className="font-bold text-xl text-emerald-400">Paiement confirmé</p>
             <p className="text-slate-400 text-sm mt-2">Votre commande a été enregistrée.</p>
-            <p className="text-slate-600 text-xs mt-3">
-              Vous pouvez fermer l'onglet GeniusPay s'il est encore ouvert.
-            </p>
             <button onClick={() => navigate('/account')} className="btn-primary mt-6 w-full">
               Voir mon compte
             </button>
